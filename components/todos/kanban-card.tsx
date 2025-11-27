@@ -53,7 +53,13 @@ export function KanbanCard({ todo, onDelete }: KanbanCardProps) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: todo.id, data: todo })
+    } = useSortable({ 
+        id: todo.id, 
+        data: {
+            ...todo,
+            type: "Task",
+        } 
+    })
 
     const style = {
         transform: CSS.Transform.toString(transform),

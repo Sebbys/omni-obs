@@ -23,7 +23,12 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ id, title, todos, onDelete }: KanbanColumnProps) {
-    const { setNodeRef } = useDroppable({ id })
+    const { setNodeRef } = useDroppable({ 
+        id,
+        data: {
+            type: "Column",
+        }
+    })
 
     return (
         <div className="flex flex-col h-full min-h-[500px] w-[300px] bg-muted/30 rounded-lg p-4 border border-border/50">

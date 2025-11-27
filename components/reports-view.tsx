@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTasks } from "@/hooks/use-tasks"
 import { useProjects } from "@/hooks/use-projects"
+import { ActivityChart } from "@/components/charts/activity-chart"
+import { StatusPieChart } from "@/components/charts/status-pie-chart"
+import { PriorityBarChart } from "@/components/charts/priority-bar-chart"
 
 export function ReportsView() {
     const { data: tasks } = useTasks()
@@ -54,42 +57,9 @@ export function ReportsView() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Tasks by Status</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm">To Do</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-muted-foreground rounded-full"
-                                        style={{ width: `${(tasksByStatus.todo / totalTasks) * 100}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium w-8 text-right">{tasksByStatus.todo}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm">In Progress</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-chart-1 rounded-full"
-                                        style={{ width: `${(tasksByStatus.in_progress / totalTasks) * 100}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium w-8 text-right">{tasksByStatus.in_progress}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm">Completed</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-chart-2 rounded-full"
-                                        style={{ width: `${(tasksByStatus.done / totalTasks) * 100}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium w-8 text-right">{tasksByStatus.done}</span>
-                            </div>
+                    <CardContent className="h-[200px] relative">
+                        <div className="absolute inset-0 p-2">
+                            <StatusPieChart tasks={safeTasks} />
                         </div>
                     </CardContent>
                 </Card>
@@ -98,27 +68,9 @@ export function ReportsView() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Tasks by Priority</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-chart-5" />
-                                <span className="text-sm">High</span>
-                            </div>
-                            <span className="text-sm font-medium">{tasksByPriority.high}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-chart-3" />
-                                <span className="text-sm">Medium</span>
-                            </div>
-                            <span className="text-sm font-medium">{tasksByPriority.medium}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-chart-2" />
-                                <span className="text-sm">Low</span>
-                            </div>
-                            <span className="text-sm font-medium">{tasksByPriority.low}</span>
+                    <CardContent className="h-[200px] relative">
+                        <div className="absolute inset-0 p-2">
+                            <PriorityBarChart tasks={safeTasks} />
                         </div>
                     </CardContent>
                 </Card>
@@ -140,14 +92,14 @@ export function ReportsView() {
                 </Card>
             </div>
 
-            {/* Placeholder for charts */}
+            {/* Activity Overview */}
             <Card>
                 <CardHeader>
                     <CardTitle className="text-base font-medium">Activity Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-64 flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-lg">
-                        <p className="text-sm">Chart visualization coming soon</p>
+                    <div className="h-[300px] w-full">
+                        <ActivityChart tasks={safeTasks} />
                     </div>
                 </CardContent>
             </Card>
