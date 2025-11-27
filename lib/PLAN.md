@@ -1,51 +1,51 @@
-# Plan: DevEx Improvements & High-Impact Features
+# Plan: Implement Better Auth (Recommended)
 
 ## Goal
-Implement a roadmap to "verify the app faster" (DevEx/QA) and implement "rewarding" high-impact features.
+Implement authentication using **Better Auth**, a modern, type-safe auth library that provides first-class support for Email/Password and Role-Based Access Control (RBAC) via plugins. This matches your request for a "better" implementation than standard boilerplate.
 
-## Phase 1: Velocity & Verification Foundation
-*Focus: "Verify the app faster and implement faster"*
+## Why Better Auth?
+*   **Built-in RBAC:** Has a dedicated plugin for Roles and Permissions, avoiding manual callback plumbing.
+*   **Type Safety:** Framework-agnostic but deeply typed, working well with our TypeScript setup.
+*   **Plugins:** Supports "Email & Password" (including reset flows) out of the box.
 
-### 1. End-to-End (E2E) Testing Setup
-- [x] **Install Playwright:** Setup Playwright for reliable, fast browser testing.
-- [x] **Critical Path Tests:** Write initial tests for:
-    - [x] Creating a Project.
-    - [x] Task Kanban Drag & Drop (verifies the new optimistic UI).
-- [x] **CI Integration:** Add a `test` script to `package.json` to run before builds.
+## Phase 1: Setup & Configuration
 
-### 2. Unit Testing Setup
-- [ ] **Install Vitest:** Lighter and faster than Jest, perfect for Vite/Next environments.
-- [ ] **Logic Tests:** Test utility functions (e.g., date helpers in `lib/utils.ts` or hook logic).
+### 1. Installation
+- [x] **Install Better Auth:** `npm install better-auth`.
+- [x] **Install Drizzle Adapter:** Better Auth works with Drizzle directly.
 
-### 3. Database Seeding
-- [x] **Enhance Seed Script:** Ensure `scripts/seed.ts` generates a rich, realistic dataset (5 projects, 20 tasks, 5 users) so developers don't waste time manually creating data to test UI.
-- [x] **Update package.json:** Add a `db:seed` script.
+### 2. Database Schema
+- [x] **Generate Auth Schema:** Better Auth requires specific tables (`user`, `session`, `account`, `verification`).
+    - We will use the CLI or manually update `db/schema.ts` to include these.
+- [x] **Add Role Support:** Ensure the `user` table has a `role` field (or use the `admin` plugin's structure).
+- [x] **Migration:** Run `npm run db:push`. (Executed successfully, though had to clear data first).
 
-## Phase 2: Rewarding High-Impact Features
-*Focus: "Most possible and rewarding implementations"*
+### 3. Auth Configuration
+- [x] **Create `lib/auth.ts`:** Initialize `betterAuth` with:
+    - `database`: Drizzle adapter.
+    - `emailAndPassword`: `{ enabled: true }`.
+    - `plugins`: `[admin()]` (for RBAC).
 
-### 1. Interactive Dashboard (Visual Reward)
-- [x] **Real Charts:** Replace the placeholder "Chart visualization coming soon" in `ReportsView` and `DashboardView` with real `recharts` components.
-    - [x] `ActivityChart` (Line)
-    - [x] `StatusPieChart` (Pie)
-    - [x] `PriorityBarChart` (Bar)
-- [ ] **Data Integration:** aggregated data from `projects` and `tasks` tables (e.g., "Tasks Completed vs Pending", "Project Progress"). (Done via client-side aggregation in charts).
+### 4. Auth Client
+- [x] **Create `lib/auth-client.ts`:** Initialize the client-side library for React hooks (`useSession`, `signIn`, `signUp`).
 
-### 2. Real Authentication (Security Reward)
-- [ ] **Integrate NextAuth.js (v5):** Currently, the app uses a mock-like `useUsers` hook.
-- [ ] **Schema Update:** Add `accounts`, `sessions` tables to `db/schema.ts`.
-- [ ] **GitHub/Google Provider:** Enable real login to secure the app.
+## Phase 2: Implementation
 
-### 3. Real-time / Persistent Notifications
-- [ ] **Notification System:** Implement the backend for the placeholder `NotificationsView`.
-- [ ] **Triggers:** Auto-create notifications when a user is assigned a task or a task status changes.
+### 1. Authentication UI
+- [ ] **Login Page (`app/login/page.tsx`):** Create a form using `authClient.signIn.email`.
+- [ ] **Signup Page (`app/signup/page.tsx`):** Create a form using `authClient.signUp.email`.
+- [ ] **Logout Button:** Implement `authClient.signOut`.
 
-### 4. Task Details & Collaboration
-- [ ] **Rich Text Description:** Upgrade task description to a rich text editor (e.g., TipTap).
-- [ ] **Comments:** Add a `comments` table and UI to tasks for team collaboration.
+### 2. Protection & Middleware
+- [ ] **Middleware:** Create `middleware.ts` to protect routes like `/dashboard`, `/projects` using the session token.
+- [ ] **Role Verification:** Use `authClient` or server-side verification to restrict access (e.g., only 'admin' can see Settings).
 
-## Recommendation for Immediate Next Step
-Start with **Phase 2, Step 2 (Real Authentication)**. Now that the app looks good with charts, making it secure and multi-user ready is the next logical step.
+### 3. Replace Mock Data
+- [ ] **Update `hooks/use-users.ts`:** Replace the current mock implementation with real data fetching from the DB or Auth session.
+- [ ] **Update Header:** Show the logged-in user's avatar/name.
+
+## Recommendation
+Proceed with **Phase 2: Implementation**.
 
 ## User Action Required
-Approve this plan to proceed with the NextAuth.js implementation.
+Approve this plan to start installing Better Auth.

@@ -5,14 +5,47 @@ import { relations } from 'drizzle-orm';
 export const priorityEnum = pgEnum('priority', ['low', 'medium', 'high']);
 export const statusEnum = pgEnum('status', ['todo', 'in_progress', 'review', 'done']);
 
-// Users Table
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
+// Users Table (Better Auth Compatible)
+export const users = pgTable('user', {
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  avatarUrl: text('avatar_url'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  emailVerified: boolean('emailVerified').notNull(),
+  image: text('image'),
+  createdAt: timestamp('createdAt').notNull(),
+  updatedAt: timestamp('updatedAt').notNull(),
+  role: text('role'), // For Better Auth Admin Plugin
+  banned: boolean('banned'), // For Better Auth Admin Plugin
+  banReason: text('banReason'), // For Better Auth Admin Plugin
+  banExpires: timestamp('banExpires'), // For Better Auth Admin Plugin
+});
+
+export const sessions = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  ipAddress: text("ipAddress"),
+  userAgent: text("userAgent"),
+  userId: text("userId").notNull().references(() => users.id),
+});
+
+export const accounts = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("accountId").notNull(),
+  providerId: text("providerId").notNull(),
+  userId: text("userId").notNull().references(() => users.id),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  idToken: text("idToken"),
+  expiresAt: timestamp("expiresAt"),
+  password: text("password"),
+});
+
+export const verifications = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt"),
 });
 
 // Projects Table
@@ -75,7 +108,7 @@ export const tasks = pgTable('tasks', {
 
 // Users <-> Tasks Junction Table
 export const usersToTasks = pgTable('users_to_tasks', {
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   taskId: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
 }, (t) => ([
 
@@ -87,6 +120,22 @@ export const usersToTasks = pgTable('users_to_tasks', {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   tasks: many(usersToTasks),
+  sessions: many(sessions),
+  accounts: many(accounts),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
 }));
 
 export const projectsRelations = relations(projects, ({ many }) => ({

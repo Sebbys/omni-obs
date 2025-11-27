@@ -10,6 +10,7 @@
     "test:e2e": "playwright test",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:reset": "tsx scripts/reset.ts",
     "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {

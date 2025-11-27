@@ -2,27 +2,22 @@
 
 ## Goal: Implement Real Authentication & Notifications
 
-### 1. Authentication (NextAuth.js)
-- [ ] **Install NextAuth.js (v5 beta/latest):** `npm install next-auth@beta`.
-- [ ] **Schema Update:**
-    - [ ] Add `accounts`, `sessions`, `verification_tokens` to `db/schema.ts` (Drizzle adapter compatible).
-    - [ ] Run migration `db:push`.
-- [ ] **Configuration:**
-    - [ ] Create `auth.ts` (or `lib/auth.ts`).
-    - [ ] Create `app/api/auth/[...nextauth]/route.ts`.
-    - [ ] Configure `Google` and `GitHub` providers.
-- [ ] **Middleware:** Protect routes (e.g., `/dashboard`, `/settings`) in `middleware.ts`.
-- [ ] **UI Integration:**
-    - [ ] Replace `useUsers` hook mock data with `useSession`.
-    - [ ] Create a Login Page (`app/login/page.tsx`).
-    - [ ] Update `Header` with User Menu (Sign Out).
+### 1. Database & Auth Setup
+- [x] **Schema Update:** Updated `db/schema.ts` with `user` (Better Auth), `session`, `account`, `verification` tables.
+- [x] **Reset & Seed:** Created `scripts/reset.ts` and updated `scripts/seed.ts` to handle Better Auth schema (UUIDs, roles).
+- [ ] **Execute Reset:** Run `npm run db:reset` (or `npx tsx scripts/reset.ts`) locally to drop all tables.
+- [ ] **Execute Push:** Run `npm run db:push` locally to apply the new schema.
+- [ ] **Execute Seed:** Run `npm run db:seed` locally to populate users and projects.
 
-### 2. Notifications System
-- [ ] **Schema Update:** Add `notifications` table (`id`, `userId`, `title`, `message`, `read`, `type`, `createdAt`).
-- [ ] **Backend:** Create Server Actions for `getNotifications`, `markAsRead`.
-- [ ] **Frontend:**
-    - [ ] Implement `NotificationsView` with real data.
-    - [ ] Add "Toast" triggers for new notifications.
+### 2. Authentication UI (Better Auth)
+- [ ] **Login Page (`app/login/page.tsx`):** Implement login form using `authClient.signIn.email`.
+- [ ] **Signup Page (`app/signup/page.tsx`):** Implement signup form.
+- [ ] **Middleware:** Create `middleware.ts` to protect `/dashboard` and other routes.
 
-### 3. Maintenance
-- [ ] **Verify E2E Tests:** Ensure Playwright tests pass with Auth enabled (might need test mode or mock auth).
+### 3. Notifications System
+- [ ] **Schema:** Add `notifications` table to `db/schema.ts`.
+- [ ] **Backend:** Actions for fetching/marking notifications.
+- [ ] **Frontend:** Real-time or polling notification UI.
+
+### 4. Cleanup
+- [ ] **Remove Old Auth:** Deprecate any remaining `useUsers` mock logic in favor of `useSession`.
