@@ -1,0 +1,21 @@
+﻿
+> mist-umbra@0.1.0 lint
+> eslint
+
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\app\actions\project-features.ts
+    7:10  warning  'uuid' is defined but never used       @typescript-eslint/no-unused-vars
+   65:57  warning  'projectId' is defined but never used  @typescript-eslint/no-unused-vars
+  108:67  warning  'projectId' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\components\dashboard-view.tsx
+  66:15  warning  'totalTasks' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\scripts\get-project-id.ts
+  2:10  warning  'projects' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\scripts\seed.ts
+  6:10  warning  'eq' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 6 problems (0 errors, 6 warnings)
+

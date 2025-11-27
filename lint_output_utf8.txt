@@ -1,0 +1,37 @@
+﻿
+> mist-umbra@0.1.0 lint
+> eslint
+
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\app\actions\project-features.ts
+    7:10  warning  'uuid' is defined but never used       @typescript-eslint/no-unused-vars
+   65:57  warning  'projectId' is defined but never used  @typescript-eslint/no-unused-vars
+  108:67  warning  'projectId' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\app\actions\projects.ts
+  4:20  warning  'projectTodos' is defined but never used       @typescript-eslint/no-unused-vars
+  4:34  warning  'projectChangelogs' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\components\dashboard-view.tsx
+  66:15  warning  'totalTasks' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\components\project-detail-view.tsx
+   3:10  warning  'useState' is defined but never used      @typescript-eslint/no-unused-vars
+  29:38  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\components\project-todo-list.tsx
+  106:25  error  Parsing error: Expression expected
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\components\todos\todo-item.tsx
+  30:79  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:79  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Work\Omni\PRODUCTION\antimatter\mist-umbra\scripts\seed.ts
+  6:10  warning  'eq' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 16 problems (8 errors, 8 warnings)
+

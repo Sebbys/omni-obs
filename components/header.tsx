@@ -1,0 +1,85 @@
+"use client"
+
+import { useState } from "react"
+import { Search, Bell, Menu, Command } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+interface HeaderProps {
+    onMenuClick?: () => void
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
+    const [searchFocused, setSearchFocused] = useState(false)
+
+    return (
+        <header className="h-14 px-4 md:px-6 border-b border-border bg-card flex items-center justify-between gap-4 shrink-0">
+            {/* Left side */}
+            <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
+                    <Menu className="w-5 h-5" />
+                </Button>
+
+                {/* Search - Hidden on mobile */}
+                <div className="hidden sm:flex items-center relative">
+                    <Search className="absolute left-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                        type="text"
+                        placeholder="Search..."
+                        className={`w-48 md:w-64 pl-9 pr-12 h-9 bg-background transition-all ${searchFocused ? "w-64 md:w-80" : ""
+                            }`}
+                        onFocus={() => setSearchFocused(true)}
+                        onBlur={() => setSearchFocused(false)}
+                    />
+                    <kbd className="absolute right-2 hidden md:flex items-center gap-0.5 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        <Command className="w-3 h-3" />K
+                    </kbd>
+                </div>
+            </div>
+
+            {/* Right side */}
+            <div className="flex items-center gap-2">
+                {/* Mobile Search */}
+                <Button variant="ghost" size="icon" className="sm:hidden">
+                    <Search className="w-5 h-5" />
+                </Button>
+
+                {/* Notifications */}
+                <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="w-5 h-5" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-chart-5 rounded-full" />
+                </Button>
+
+                {/* User Menu */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="gap-2 px-2">
+                            <Avatar className="w-7 h-7">
+                                <AvatarImage src="https://github.com/shadcn.png" />
+                                <AvatarFallback className="text-xs">JD</AvatarFallback>
+                            </Avatar>
+                            <span className="hidden md:inline text-sm font-medium">John Doe</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>Profile</DropdownMenuItem>
+                        <DropdownMenuItem>Settings</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive">Sign out</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </header>
+    )
+}
