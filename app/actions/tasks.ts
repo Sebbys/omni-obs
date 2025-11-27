@@ -3,9 +3,11 @@
 import { db } from "@/db"
 import { tasks, usersToTasks } from "@/db/schema"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag, cacheTag } from "next/cache"
 
 export async function getTasks(startDate?: string, endDate?: string) {
+  "use cache"
+  cacheTag("tasks")
   try {
     const whereConditions = []
     if (startDate) whereConditions.push(gte(tasks.startDate, new Date(startDate)))

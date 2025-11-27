@@ -3,9 +3,11 @@
 import { db } from "@/db"
 import { users } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag, cacheTag } from "next/cache"
 
 export async function getUsers() {
+  "use cache"
+  cacheTag("users")
   try {
     const data = await db.select().from(users).orderBy(desc(users.createdAt))
     return data.map(u => ({

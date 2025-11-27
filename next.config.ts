@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // @ts-ignore - types might not be updated yet
+  cacheComponents: true,
 };
 
 export default nextConfig;

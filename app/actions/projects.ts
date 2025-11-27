@@ -3,9 +3,11 @@
 import { db } from "@/db"
 import { projects } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag, cacheTag } from "next/cache"
 
 export async function getProjects() {
+  "use cache"
+  cacheTag("projects")
   try {
     const data = await db.query.projects.findMany({
       orderBy: [desc(projects.createdAt)],
@@ -89,6 +91,8 @@ export async function getProjects() {
 }
 
 export async function getProject(id: string) {
+  "use cache"
+  cacheTag(`project-${id}`)
   try {
     const data = await db.query.projects.findMany({
       where: eq(projects.id, id),
@@ -196,13 +200,15 @@ export async function createProject(data: { name: string; description?: string; 
 
 export async function updateProject(id: string, data: { name?: string; description?: string; color?: string }) {
   try {
-    const [updatedProject] = await db.update(projects)
+    const res = await db.update(projects)
       .set({
         ...data,
         updatedAt: new Date(),
       })
       .where(eq(projects.id, id))
       .returning()
+    
+    const updatedProject = res[0]
 
     revalidatePath("/projects")
     // Revalidate specific project page
