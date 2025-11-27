@@ -1,9 +1,7 @@
-import { AppShell } from "@/components/app-shell"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Loading() {
   return (
-    <AppShell>
       <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
         {/* Toolbar Skeleton */}
         <div className="px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border">
@@ -47,6 +45,5 @@ export default function Loading() {
           </div>
         </div>
       </div>
-    </AppShell>
   )
 }

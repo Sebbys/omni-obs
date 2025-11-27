@@ -1,10 +1,8 @@
-import { AppShell } from "@/components/app-shell"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 
 export default function Loading() {
   return (
-    <AppShell>
       <div className="p-4 md:p-6 space-y-6 max-w-4xl">
         {/* Header */}
         <div>
@@ -52,6 +50,5 @@ export default function Loading() {
           </Card>
         </div>
       </div>
-    </AppShell>
   )
 }

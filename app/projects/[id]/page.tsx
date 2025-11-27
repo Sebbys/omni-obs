@@ -1,7 +1,8 @@
-import { AppShell } from "@/components/app-shell"
 import { ProjectDetailView } from "@/components/project-detail-view"
-import { getProject } from "@/app/actions/projects" // Assuming you've added getProject to projects actions
+import { getProject } from "@/app/actions/projects"
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
+import Loading from "./loading"
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -9,17 +10,22 @@ interface ProjectDetailPageProps {
   }>
 }
 
-export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+async function ProjectDetailsFetcher({ params }: { params: Promise<{ id: string }> }) {
   const { id: projectId } = await params
-  const project = await getProject(projectId)
+  // const project = await getProject(projectId)
+  const project = null
 
-  if (!project) {
-    notFound()
-  }
+  // if (!project) {
+  //   notFound()
+  // }
 
+  return <ProjectDetailView projectId={projectId} initialProject={project} />
+}
+
+export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   return (
-    <AppShell>
-      <ProjectDetailView projectId={projectId} initialProject={project} />
-    </AppShell>
+    <Suspense fallback={<Loading />}>
+      <ProjectDetailsFetcher params={params} />
+    </Suspense>
   )
 }

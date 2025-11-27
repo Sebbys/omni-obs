@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { AppShell } from "@/components/app-shell"
 import "./globals.css"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
@@ -28,6 +29,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
+import { Suspense } from "react"
+import Loading from "./loading"
+
+// ... imports
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,7 +42,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={"font-sans antialiased " + geist.variable + " " + geistMono.variable} suppressHydrationWarning>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <Suspense fallback={<Loading />}>
+            <AppShell>
+              {children}
+            </AppShell>
+          </Suspense>
+        </QueryProvider>
         <Toaster />
       </body>
     </html>

@@ -1,45 +1,39 @@
-# Plan: Implement Loading States and Cache Components
+# Plan: Refine Loading Architecture
 
 ## Goal
-Add comprehensive loading states and implement Next.js 16 `cacheComponents` features (using `use cache` directive) to improve performance and user experience.
-
-## Context
-- Project uses Next.js 16.
-- `cacheComponents` config enables granular caching control.
-- Loading UI should be implemented using `loading.tsx` and `<Suspense>`.
+Improve the loading experience by moving the `AppShell` to the root layout. This ensures the sidebar and header persist during navigation, preventing layout shifts and flickering. `loading.tsx` files will then only be responsible for the main content area skeletons.
 
 ## Steps
 
-### 1. Configuration
-- [x] Enable `cacheComponents` in `next.config.ts`.
+### 1. Refactor Layout
+- [x] Modify `app/layout.tsx` to wrap `{children}` with `<AppShell>`.
+- [x] Wrapped `AppShell` in `<Suspense fallback={<Loading />}>` to fix PPR "Uncached data accessed outside Suspense" error (caused by `usePathname` or other dynamic client hooks in `AppShell` interacting with PPR).
 
-### 2. Global Loading UI
-- [x] Create `app/loading.tsx` for global route transitions using a generic spinner or skeleton layout.
+### 2. Clean Up Pages
+Remove `<AppShell>` wrapper from the following pages, as it's now in the layout:
+- [x] `app/page.tsx`
+- [x] `app/projects/page.tsx`
+- [x] `app/projects/[id]/page.tsx` (Also refactored for Suspense data fetching)
+- [x] `app/calendar/page.tsx`
+- [x] `app/team/page.tsx`
+- [x] `app/reports/page.tsx`
+- [x] `app/settings/page.tsx`
+- [x] `app/help/page.tsx`
+- [x] `app/notifications/page.tsx`
 
-### 3. Route-Specific Loading States
-Create `loading.tsx` for key routes to provide context-aware skeletons.
-- [x] `app/projects/loading.tsx` (Skeleton for project list)
-- [x] `app/projects/[id]/loading.tsx` (Skeleton for project details)
+### 3. Clean Up Loading States
+Remove `<AppShell>` wrapper from all `loading.tsx` files to avoid double-shelling and ensure atomic loading:
+- [x] `app/projects/loading.tsx`
+- [x] `app/projects/[id]/loading.tsx`
 - [x] `app/calendar/loading.tsx`
 - [x] `app/team/loading.tsx`
 - [x] `app/reports/loading.tsx`
 - [x] `app/settings/loading.tsx`
 
-### 4. Component Caching (`use cache`)
-Apply `'use cache'` to server actions and heavy data fetching components to leverage the new caching mechanism.
-- [x] Analyze `app/actions/` files (`projects.ts`, `tasks.ts`, etc.) and apply `'use cache'` to read operations where data freshness requirements allow (using `cacheLife` if needed).
-- [x] Apply `'use cache'` to heavy UI components if they are static enough (e.g., complex dashboards or report views) or parts of them. (Applied via Server Actions which are used by components).
-
-### 5. Component Loading (Suspense)
-- [x] Identify components that fetch data asynchronously and wrap them in `<Suspense>` with appropriate fallback skeletons in their parent pages/layouts.
-    - `loading.tsx` handles the page level suspense.
-    - Client components handle their own loading states via `useQuery` skeletons.
-
-### 6. Refinement
-- [x] Ensure `skeleton.tsx` and other UI placeholders are visually consistent with the actual content.
-- [x] Verify no "flash of loading content" for very fast loads if possible (Next.js handles this well usually).
+### 4. Refine Global Loading
+- [x] Update `app/loading.tsx` to remove any layout assumptions if necessary, ensuring it fits within the content area of the Shell.
 
 ## Verification
-- [x] Build the project to ensure `cacheComponents` is valid.
-- [x] Navigate through the app to verify loading skeletons appear.
-- [x] Check logs/network to verify caching is working (fewer requests for cached data).
+- [x] Navigate between pages to verify the Sidebar and Header remain static.
+- [x] Verify the loading skeletons appear *inside* the content area.
+- [x] Build the project to ensure no structure violations. (Fixed PPR error by wrapping Shell in Suspense).

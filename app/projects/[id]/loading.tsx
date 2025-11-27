@@ -1,9 +1,7 @@
-import { AppShell } from "@/components/app-shell"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Loading() {
   return (
-    <AppShell>
       <div className="p-4 md:p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -41,6 +39,5 @@ export default function Loading() {
           </div>
         </div>
       </div>
-    </AppShell>
   )
 }
