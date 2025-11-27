@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useProjects } from "@/hooks/use-projects"
 import { useUsers } from "@/hooks/use-users"
 import { useCreateTask, useUpdateTask, type Task, type CreateTaskInput } from "@/hooks/use-tasks"
 import { format, addDays } from "date-fns"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 interface TaskModalProps {
     open: boolean
@@ -74,6 +75,9 @@ export function TaskModal({ open, onOpenChange, task }: TaskModalProps) {
             <DialogContent className="bg-card border-border max-w-lg">
                 <DialogHeader>
                     <DialogTitle className="text-foreground">{task ? "Edit Task" : "Create Task"}</DialogTitle>
+                    <VisuallyHidden>
+                        <DialogDescription>{task ? "Edit existing task details" : "Enter details for new task"}</DialogDescription>
+                    </VisuallyHidden>
                 </DialogHeader>
 
                 <form key={task?.id || 'create'} onSubmit={handleSubmit} className="space-y-4">

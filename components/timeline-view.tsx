@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { ChevronLeft, ChevronRight, Search, Filter, SlidersHorizontal, Loader2, Plus } from "lucide-react"
 import { useTasks, useDeleteTask, type Task } from "@/hooks/use-tasks"
 import TaskCard from "./task-card"
+import { TimelineSkeleton } from "./timeline-skeleton"
 import { TaskModal } from "./modals/task-modal"
 import { ManageModal } from "./modals/manage-modal"
 import { Button } from "@/components/ui/button"
@@ -180,8 +181,11 @@ export default function TimelineView() {
                 </div>
 
                 {/* Calendar Grid Container */}
-                <div className="flex-1 overflow-auto relative border border-border rounded-lg bg-card">
-                    {/* Days Header */}
+                {isLoading ? (
+                    <TimelineSkeleton />
+                ) : (
+                    <div className="flex-1 overflow-auto relative border border-border rounded-lg bg-card">
+                        {/* Days Header */}
                     <div className="grid grid-cols-7 border-b border-border sticky top-0 bg-card z-30">
                         {days.map((day, index) => (
                             <div
@@ -212,12 +216,6 @@ export default function TimelineView() {
                                 <div key={i} className="border-r border-border/50 h-full last:border-r-0" />
                             ))}
                         </div>
-
-                        {isLoading && (
-                            <div className="col-span-7 flex items-center justify-center py-16">
-                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                            </div>
-                        )}
 
                         {error && (
                             <div className="col-span-7 flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
@@ -254,6 +252,7 @@ export default function TimelineView() {
                             ))}
                     </div>
                 </div>
+                )}
             </div>
 
             <TaskModal

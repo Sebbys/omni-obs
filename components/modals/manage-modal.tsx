@@ -10,6 +10,8 @@ import { useUsers, useDeleteUser, type User } from "@/hooks/use-users"
 import { ProjectModal } from "./project-modal"
 import { UserModal } from "./user-modal"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { DialogDescription } from "@/components/ui/dialog"
 
 interface ManageModalProps {
     open: boolean
@@ -37,6 +39,9 @@ export function ManageModal({ open, onOpenChange }: ManageModalProps) {
                 <DialogContent className="bg-card border-border max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
                     <DialogHeader>
                         <DialogTitle className="text-foreground">Manage</DialogTitle>
+                        <VisuallyHidden>
+                            <DialogDescription>Manage projects and team members</DialogDescription>
+                        </VisuallyHidden>
                     </DialogHeader>
 
                     <Tabs defaultValue="projects" className="flex-1 flex flex-col overflow-hidden">

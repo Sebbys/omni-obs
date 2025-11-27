@@ -1,39 +1,27 @@
-# Plan: Refine Loading Architecture
+# Plan: Add Loading Skeleton to Task View (Timeline)
 
 ## Goal
-Improve the loading experience by moving the `AppShell` to the root layout. This ensures the sidebar and header persist during navigation, preventing layout shifts and flickering. `loading.tsx` files will then only be responsible for the main content area skeletons.
+Replace the simple spinner in `TimelineView` (used in Projects > Tasks) with a proper loading skeleton that mirrors the calendar grid structure.
+
+## Context
+- `TimelineView` is a Client Component using `useTasks` hook.
+- Currently uses `isLoading` check to show a simple `Loader2`.
+- Needs to render a grid of skeleton blocks to reduce layout shift and improve UX.
 
 ## Steps
 
-### 1. Refactor Layout
-- [x] Modify `app/layout.tsx` to wrap `{children}` with `<AppShell>`.
-- [x] Wrapped `AppShell` in `<Suspense fallback={<Loading />}>` to fix PPR "Uncached data accessed outside Suspense" error (caused by `usePathname` or other dynamic client hooks in `AppShell` interacting with PPR).
+### 1. Create Skeleton Component
+- [x] Create `components/timeline-skeleton.tsx`.
+- [x] Structure it to match `TimelineView`'s grid:
+    - 7-column grid headers.
+    - 7-column grid body with placeholder task bars.
+    - Use `components/ui/skeleton.tsx`.
 
-### 2. Clean Up Pages
-Remove `<AppShell>` wrapper from the following pages, as it's now in the layout:
-- [x] `app/page.tsx`
-- [x] `app/projects/page.tsx`
-- [x] `app/projects/[id]/page.tsx` (Also refactored for Suspense data fetching)
-- [x] `app/calendar/page.tsx`
-- [x] `app/team/page.tsx`
-- [x] `app/reports/page.tsx`
-- [x] `app/settings/page.tsx`
-- [x] `app/help/page.tsx`
-- [x] `app/notifications/page.tsx`
-
-### 3. Clean Up Loading States
-Remove `<AppShell>` wrapper from all `loading.tsx` files to avoid double-shelling and ensure atomic loading:
-- [x] `app/projects/loading.tsx`
-- [x] `app/projects/[id]/loading.tsx`
-- [x] `app/calendar/loading.tsx`
-- [x] `app/team/loading.tsx`
-- [x] `app/reports/loading.tsx`
-- [x] `app/settings/loading.tsx`
-
-### 4. Refine Global Loading
-- [x] Update `app/loading.tsx` to remove any layout assumptions if necessary, ensuring it fits within the content area of the Shell.
+### 2. Integrate into TimelineView
+- [x] Import `TimelineSkeleton` in `components/timeline-view.tsx`.
+- [x] Replace the `isLoading` spinner block with `<TimelineSkeleton />`.
+- [x] Ensure it sits within the existing layout containers (e.g., inside the scrollable area).
 
 ## Verification
-- [x] Navigate between pages to verify the Sidebar and Header remain static.
-- [x] Verify the loading skeletons appear *inside* the content area.
-- [x] Build the project to ensure no structure violations. (Fixed PPR error by wrapping Shell in Suspense).
+- [x] Inspect the Task View (Projects -> Tasks) to see the skeleton during data load.
+- [x] Verify no layout shifts when data appears.

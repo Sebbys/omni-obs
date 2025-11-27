@@ -6,8 +6,9 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useCreateUser, useUpdateUser, type User } from "@/hooks/use-users"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 interface UserModalProps {
     open: boolean
@@ -48,6 +49,9 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
             <DialogContent className="bg-card border-border max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-foreground">{user ? "Edit User" : "Add User"}</DialogTitle>
+                    <VisuallyHidden>
+                        <DialogDescription>{user ? "Edit existing user details" : "Enter details for new user"}</DialogDescription>
+                    </VisuallyHidden>
                 </DialogHeader>
 
                 <form key={user?.id || 'create'} onSubmit={handleSubmit} className="space-y-4">
