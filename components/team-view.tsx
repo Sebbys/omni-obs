@@ -77,7 +77,7 @@ export function TeamView() {
                         </CardHeader>
                         <CardContent className="flex items-center gap-4">
                             <Avatar className="h-12 w-12">
-                                <AvatarImage src={user.avatarUrl || undefined} alt={user.name} />
+                                <AvatarImage src={user.image || undefined} alt={user.name} />
                                 <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
                             <div>

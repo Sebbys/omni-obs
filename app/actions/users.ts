@@ -24,9 +24,13 @@ export async function getUsers() {
 export async function createUser(data: { email: string; name: string; avatarUrl?: string }) {
   try {
     const [newUser] = await db.insert(users).values({
+      id: crypto.randomUUID(),
       email: data.email,
       name: data.name,
-      avatarUrl: data.avatarUrl,
+      image: data.avatarUrl,
+      emailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }).returning()
 
     revalidatePath("/users")
@@ -45,7 +49,9 @@ export async function updateUser(id: string, data: { email?: string; name?: stri
   try {
     const [updatedUser] = await db.update(users)
       .set({
-        ...data,
+        email: data.email,
+        name: data.name,
+        image: data.avatarUrl,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))

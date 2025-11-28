@@ -3,6 +3,7 @@
 import { useDroppable } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { KanbanCard } from "./kanban-card"
+import { cn } from "@/lib/utils"
 
 interface Todo {
     id: string
@@ -22,8 +23,10 @@ interface KanbanColumnProps {
     onDelete: (id: string) => void
 }
 
+
+
 export function KanbanColumn({ id, title, todos, onDelete }: KanbanColumnProps) {
-    const { setNodeRef } = useDroppable({ 
+    const { setNodeRef, isOver } = useDroppable({
         id,
         data: {
             type: "Column",
@@ -31,7 +34,13 @@ export function KanbanColumn({ id, title, todos, onDelete }: KanbanColumnProps) 
     })
 
     return (
-        <div className="flex flex-col h-full min-h-[500px] w-[300px] bg-muted/30 rounded-lg p-4 border border-border/50">
+        <div
+            ref={setNodeRef}
+            className={cn(
+                "flex flex-col h-full min-h-[500px] w-[300px] rounded-lg p-4 border border-border/50 transition-colors duration-200",
+                isOver ? "bg-muted/50 border-primary/20" : "bg-muted/30"
+            )}
+        >
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-sm text-foreground">{title}</h3>
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
@@ -39,13 +48,19 @@ export function KanbanColumn({ id, title, todos, onDelete }: KanbanColumnProps) 
                 </span>
             </div>
 
-            <SortableContext id={id} items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-                <div ref={setNodeRef} className="flex-1 space-y-3">
-                    {todos.map((todo) => (
-                        <KanbanCard key={todo.id} todo={todo} onDelete={onDelete} />
-                    ))}
-                </div>
-            </SortableContext>
+            <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)]">
+                <SortableContext
+                    id={id}
+                    items={todos.map((t) => t.id)}
+                    strategy={verticalListSortingStrategy}
+                >
+                    <div className="space-y-3 min-h-[100px]">
+                        {todos.map((todo) => (
+                            <KanbanCard key={todo.id} todo={todo} onDelete={onDelete} />
+                        ))}
+                    </div>
+                </SortableContext>
+            </div>
         </div>
     )
 }

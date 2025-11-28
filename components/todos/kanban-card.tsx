@@ -1,6 +1,6 @@
 "use client"
 
-import { useSortable } from "@dnd-kit/sortable"
+import { useSortable, defaultAnimateLayoutChanges, AnimateLayoutChanges } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -45,6 +45,9 @@ const categoryColors = {
     other: "bg-gray-500/10 text-gray-500",
 }
 
+const animateLayoutChanges: AnimateLayoutChanges = (args) =>
+    defaultAnimateLayoutChanges({ ...args, wasDragging: true })
+
 export function KanbanCard({ todo, onDelete }: KanbanCardProps) {
     const {
         attributes,
@@ -53,12 +56,13 @@ export function KanbanCard({ todo, onDelete }: KanbanCardProps) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ 
-        id: todo.id, 
+    } = useSortable({
+        id: todo.id,
         data: {
             ...todo,
             type: "Task",
-        } 
+        },
+        animateLayoutChanges,
     })
 
     const style = {
@@ -71,14 +75,14 @@ export function KanbanCard({ todo, onDelete }: KanbanCardProps) {
             <div
                 ref={setNodeRef}
                 style={style}
-                className="opacity-50 bg-muted/50 border-2 border-dashed border-primary/50 rounded-lg h-[100px]"
+                className="opacity-30 bg-muted/50 border-2 border-dashed border-primary/50 rounded-lg h-[100px]"
             />
         )
     }
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <Card className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow group">
+            <Card className="cursor-grab active:cursor-grabbing hover:shadow-md hover:border-primary/50 transition-all duration-200 group">
                 <CardContent className="p-3 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <span className="text-sm font-medium leading-tight">{todo.content}</span>

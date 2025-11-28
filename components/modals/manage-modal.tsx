@@ -116,7 +116,7 @@ export function ManageModal({ open, onOpenChange }: ManageModalProps) {
                                 <div key={user.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="w-8 h-8">
-                                            <AvatarImage src={user.avatarUrl || "https://i.pravatar.cc/150?u=" + user.id} alt={user.name} />
+                                            <AvatarImage src={user.image || "https://i.pravatar.cc/150?u=" + user.id} alt={user.name} />
                                             <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div>

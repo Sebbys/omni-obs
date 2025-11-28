@@ -205,7 +205,7 @@ export function TaskModal({ open, onOpenChange, task }: TaskModalProps) {
                                 >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
-                                        src={user.avatarUrl || `https://i.pravatar.cc/150?u=${user.id}`}
+                                        src={user.image || `https://i.pravatar.cc/150?u=${user.id}`}
                                         alt={user.name}
                                         className="w-5 h-5 rounded-full"
                                     />

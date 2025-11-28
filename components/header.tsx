@@ -13,6 +13,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { authClient } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
+import { getInitials } from "@/lib/utils"
 
 interface HeaderProps {
     onMenuClick?: () => void
@@ -20,6 +23,18 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
     const [searchFocused, setSearchFocused] = useState(false)
+    const { data: session, isPending } = authClient.useSession()
+    const router = useRouter()
+
+    const handleSignOut = async () => {
+        await authClient.signOut({
+            fetchOptions: {
+                onSuccess: () => {
+                    router.push("/login")
+                },
+            },
+        })
+    }
 
     return (
         <header className="h-14 px-4 md:px-6 border-b border-border bg-card flex items-center justify-between gap-4 shrink-0">
@@ -64,10 +79,14 @@ export function Header({ onMenuClick }: HeaderProps) {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="gap-2 px-2">
                             <Avatar className="w-7 h-7">
-                                <AvatarImage src="https://github.com/shadcn.png" />
-                                <AvatarFallback className="text-xs">JD</AvatarFallback>
+                                <AvatarImage src={session?.user?.image || undefined} />
+                                <AvatarFallback className="text-xs">
+                                    {session?.user?.name ? getInitials(session.user.name) : "U"}
+                                </AvatarFallback>
                             </Avatar>
-                            <span className="hidden md:inline text-sm font-medium">John Doe</span>
+                            <span className="hidden md:inline text-sm font-medium">
+                                {session?.user?.name || "User"}
+                            </span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
@@ -76,7 +95,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                         <DropdownMenuItem>Profile</DropdownMenuItem>
                         <DropdownMenuItem>Settings</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">Sign out</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>Sign out</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

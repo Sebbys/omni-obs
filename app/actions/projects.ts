@@ -43,7 +43,7 @@ export async function getProjects() {
             uniqueAssignees.set(a.user.id, {
               id: a.user.id,
               name: a.user.name,
-              avatarUrl: a.user.avatarUrl
+              avatarUrl: a.user.image
             });
           }
         });
@@ -127,7 +127,7 @@ export async function getProject(id: string) {
           uniqueAssignees.set(a.user.id, {
             id: a.user.id,
             name: a.user.name,
-            avatarUrl: a.user.avatarUrl
+            avatarUrl: a.user.image
           });
         }
       });
@@ -182,6 +182,7 @@ export async function createProject(data: { name: string; description?: string; 
     }).returning()
 
     revalidatePath("/projects")
+    revalidateTag("projects", "projects")
     return {
       ...newProject,
       progress: 0,
@@ -200,23 +201,23 @@ export async function createProject(data: { name: string; description?: string; 
 
 export async function updateProject(id: string, data: { name?: string; description?: string; color?: string }) {
   try {
-    const res = await db.update(projects)
+    const [updatedProject] = await db.update(projects)
       .set({
         ...data,
         updatedAt: new Date(),
       })
       .where(eq(projects.id, id))
       .returning()
-    
-    const updatedProject = res[0]
 
     revalidatePath("/projects")
+    revalidateTag("projects", 'projects')
+    revalidateTag(`project-${id}`, 'projects')
     // Revalidate specific project page
 
     // Ideally we would re-fetch to get the calculated fields, but for update we might just return the basic info
     // or let the query invalidation handle it.
     // Let's return basic info but with 0/empty for calculated fields to satisfy the type if needed,
-    // though the component will likely re-fetch.
+    // though the component will likely re-fetch. 
     return {
       ...updatedProject,
       progress: 0, // Placeholder, query invalidation will fetch real value
@@ -237,6 +238,8 @@ export async function deleteProject(id: string) {
   try {
     await db.delete(projects).where(eq(projects.id, id))
     revalidatePath("/projects")
+    revalidateTag("projects", "projects")
+    revalidateTag(`project-${id}`, 'projects')
     // Revalidate specific project page
   } catch (error) {
     console.error("Failed to delete project:", error)

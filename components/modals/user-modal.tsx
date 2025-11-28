@@ -23,7 +23,7 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
     const [formData, setFormData] = useState({
         name: user?.name || "",
         email: user?.email || "",
-        avatarUrl: user?.avatarUrl || "",
+        image: user?.image || "",
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +32,7 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
         const payload = {
             name: formData.name,
             email: formData.email,
-            avatarUrl: formData.avatarUrl || undefined,
+            avatarUrl: formData.image || undefined, // Passing as avatarUrl to match use-users hook input type which maps to image in action
         }
 
         if (user) {
@@ -83,8 +83,8 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
                         <Input
                             id="avatarUrl"
                             type="url"
-                            value={formData.avatarUrl}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, avatarUrl: e.target.value }))}
+                            value={formData.image}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
                             placeholder="https://example.com/avatar.jpg"
                         />
                     </div>
