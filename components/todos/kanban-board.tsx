@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import {
     DndContext,
     defaultDropAnimationSideEffects,
@@ -71,12 +71,6 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         queryKey: ["project-todos", projectId],
         queryFn: () => getProjectTodos(projectId) as Promise<Todo[]>,
     })
-
-    useEffect(() => {
-        if (error) {
-            toast.error(error.message || "Failed to load todos")
-        }
-    }, [error])
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -310,6 +304,14 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
 
     if (isLoading) {
         return <TodoSkeleton />
+    }
+
+    if (error) {
+        return (
+            <div className="p-4 text-red-500 bg-red-50 rounded-md">
+                Error loading todos: {error.message}
+            </div>
+        )
     }
 
     const activeTodo = activeId ? todos.find((t) => t.id === activeId) : null

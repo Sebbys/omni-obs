@@ -110,6 +110,8 @@ export const projectTodos = pgTable('project_todos', {
   index('project_todos_project_id_idx').on(t.projectId),
   index('project_todos_status_idx').on(t.status),
   index('project_todos_category_idx').on(t.category),
+  index('project_todos_completed_idx').on(t.completed),
+  index('project_todos_priority_idx').on(t.priority),
 ]));
 
 // Project Changelogs Table
@@ -140,6 +142,8 @@ export const tasks = pgTable('tasks', {
   index('tasks_project_id_idx').on(t.projectId),
   index('tasks_status_idx').on(t.status),
   index('tasks_priority_idx').on(t.priority),
+  index('tasks_start_date_idx').on(t.startDate),
+  index('tasks_end_date_idx').on(t.endDate),
 ]));
 
 // Users <-> Tasks Junction Table
