@@ -1,9 +1,5 @@
-import { Spinner } from "@/components/ui/spinner"
+import { AppSkeleton } from "@/components/skeletons/app-skeleton"
 
 export default function Loading() {
-  return (
-    <div className="flex h-full w-full items-center justify-center">
-      <Spinner className="size-8 text-muted-foreground" />
-    </div>
-  )
+  return <AppSkeleton />
 }
