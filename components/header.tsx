@@ -13,6 +13,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { authClient } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
+import { getInitials } from "@/lib/utils"
 
 interface HeaderProps {
     onMenuClick?: () => void
@@ -20,6 +23,18 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
     const [searchFocused, setSearchFocused] = useState(false)
+    const { data: session, isPending } = authClient.useSession()
+    const router = useRouter()
+
+    const handleSignOut = async () => {
+        await authClient.signOut({
+            fetchOptions: {
+                onSuccess: () => {
+                    router.push("/login")
+                },
+            },
+        })
+    }
 
     return (
         <header className="h-14 px-4 md:px-6 border-b border-border bg-card flex items-center justify-between gap-4 shrink-0">
@@ -28,22 +43,6 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
                     <Menu className="w-5 h-5" />
                 </Button>
-
-                {/* Search - Hidden on mobile */}
-                <div className="hidden sm:flex items-center relative">
-                    <Search className="absolute left-3 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder="Search..."
-                        className={`w-48 md:w-64 pl-9 pr-12 h-9 bg-background transition-all ${searchFocused ? "w-64 md:w-80" : ""
-                            }`}
-                        onFocus={() => setSearchFocused(true)}
-                        onBlur={() => setSearchFocused(false)}
-                    />
-                    <kbd className="absolute right-2 hidden md:flex items-center gap-0.5 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        <Command className="w-3 h-3" />K
-                    </kbd>
-                </div>
             </div>
 
             {/* Right side */}
@@ -64,10 +63,14 @@ export function Header({ onMenuClick }: HeaderProps) {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="gap-2 px-2">
                             <Avatar className="w-7 h-7">
-                                <AvatarImage src="https://github.com/shadcn.png" />
-                                <AvatarFallback className="text-xs">JD</AvatarFallback>
+                                <AvatarImage src={session?.user?.image || undefined} />
+                                <AvatarFallback className="text-xs">
+                                    {session?.user?.name ? getInitials(session.user.name) : "U"}
+                                </AvatarFallback>
                             </Avatar>
-                            <span className="hidden md:inline text-sm font-medium">John Doe</span>
+                            <span className="hidden md:inline text-sm font-medium">
+                                {session?.user?.name || "User"}
+                            </span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
@@ -76,7 +79,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                         <DropdownMenuItem>Profile</DropdownMenuItem>
                         <DropdownMenuItem>Settings</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">Sign out</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>Sign out</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

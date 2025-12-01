@@ -1,10 +1,7 @@
-﻿import { AppShell } from "@/components/app-shell"
-import TimelineView from "@/components/timeline-view"
+﻿import { ProjectsView } from "@/components/projects-view"
 
 export default function Page() {
   return (
-    <AppShell>
-      <TimelineView />
-    </AppShell>
+    <ProjectsView />
   )
 }

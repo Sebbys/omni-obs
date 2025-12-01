@@ -7,8 +7,22 @@ import { revalidatePath } from "next/cache"
 
 // --- Project Todos Actions ---
 
+import { auth } from "@/lib/auth"
+import { headers } from "next/headers"
+
+async function getSession() {
+  return await auth.api.getSession({
+    headers: await headers()
+  })
+}
+
+// --- Project Todos Actions ---
+
 export async function getProjectTodos(projectId: string) {
   try {
+    const session = await getSession()
+    if (!session) return []
+
     const todos = await db.query.projectTodos.findMany({
       where: eq(projectTodos.projectId, projectId),
       orderBy: [desc(projectTodos.createdAt)],
@@ -22,6 +36,9 @@ export async function getProjectTodos(projectId: string) {
 
 export async function createProjectTodo(projectId: string, content: string) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     const [newTodo] = await db.insert(projectTodos).values({
       projectId,
       content,
@@ -38,6 +55,9 @@ export async function createProjectTodo(projectId: string, content: string) {
 
 export async function toggleProjectTodo(todoId: string) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     const [existingTodo] = await db.query.projectTodos.findMany({
       where: eq(projectTodos.id, todoId)
     });
@@ -63,6 +83,9 @@ export async function toggleProjectTodo(todoId: string) {
 
 export async function deleteProjectTodo(todoId: string, projectId: string) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     await db.delete(projectTodos).where(eq(projectTodos.id, todoId));
     revalidatePath("/projects");
   } catch (error) {
@@ -75,6 +98,9 @@ export async function deleteProjectTodo(todoId: string, projectId: string) {
 
 export async function getProjectChangelogs(projectId: string) {
   try {
+    const session = await getSession()
+    if (!session) return []
+
     const changelogs = await db.query.projectChangelogs.findMany({
       where: eq(projectChangelogs.projectId, projectId),
       orderBy: [desc(projectChangelogs.date)],
@@ -88,6 +114,9 @@ export async function getProjectChangelogs(projectId: string) {
 
 export async function createProjectChangelog(projectId: string, data: { version: string; title: string; content: string; date?: Date }) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     const [newChangelog] = await db.insert(projectChangelogs).values({
       projectId,
       version: data.version,
@@ -106,6 +135,9 @@ export async function createProjectChangelog(projectId: string, data: { version:
 
 export async function deleteProjectChangelog(changelogId: string, projectId: string) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     await db.delete(projectChangelogs).where(eq(projectChangelogs.id, changelogId));
     revalidatePath("/projects");
   } catch (error) {

@@ -3,13 +3,13 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getProjects } from "@/app/actions/projects"
 import { type Project } from "@/hooks/use-projects"
 import { KanbanBoard } from "@/components/todos/kanban-board"
 import { ProjectChangelog } from "./project-changelog"
 import TimelineView from "@/components/timeline-view"
+import { ProjectDetailSkeleton } from "@/components/skeletons/project-detail-skeleton"
 
 interface ProjectDetailViewProps {
   projectId: string
@@ -24,16 +24,13 @@ export function ProjectDetailView({ projectId, initialProject }: ProjectDetailVi
     queryKey: ["projects"], // Global key, will filter client-side
     queryFn: () => getProjects(),
     initialData: initialProject ? [initialProject] : undefined, // Hydrate with initial data
+    staleTime: 0, // Always refetch to ensure RBAC is up to date
   })
 
   const project = projects?.find((p: Project) => p.id === projectId)
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <ProjectDetailSkeleton />
   }
 
   if (error) {

@@ -1,10 +1,9 @@
-﻿import { AppShell } from "@/components/app-shell"
-import { CalendarView } from "@/components/calendar-view"
+﻿import { CalendarView } from "@/components/calendar-view"
 
-export default function Page() {
+export default async function Page() {
   return (
-    <AppShell>
+    <main>
       <CalendarView />
-    </AppShell>
+    </main>
   )
 }

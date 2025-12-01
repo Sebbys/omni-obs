@@ -20,6 +20,7 @@ import {
   deleteProjectChangelog,
 } from "@/app/actions/project-features"
 import { format } from "date-fns"
+import { ChangelogSkeleton } from "@/components/skeletons/changelog-skeleton"
 
 interface ProjectChangelogProps {
   projectId: string
@@ -132,11 +133,7 @@ export function ProjectChangelog({ projectId }: ProjectChangelogProps) {
         </CardContent>
       </Card>
 
-      {isLoading && (
-        <div className="flex justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
+      {isLoading && <ChangelogSkeleton />}
 
       {error && (
         <div className="text-center text-destructive py-4">

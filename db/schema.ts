@@ -5,15 +5,84 @@ import { relations } from 'drizzle-orm';
 export const priorityEnum = pgEnum('priority', ['low', 'medium', 'high']);
 export const statusEnum = pgEnum('status', ['todo', 'in_progress', 'review', 'done']);
 
-// Users Table
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  avatarUrl: text('avatar_url'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+// Users Table (Better Auth Compatible)
+export const users = pgTable('user', {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  role: text("role"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
 });
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    expiresAt: timestamp("expires_at").notNull(),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    impersonatedBy: text("impersonated_by"),
+  },
+  (table) => [index("sessions_userId_idx").on(table.userId)],
+);
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("accounts_userId_idx").on(table.userId)],
+);
+
+export const verifications = pgTable(
+  "verifications",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("verifications_identifier_idx").on(table.identifier)],
+);
 
 // Projects Table
 export const projects = pgTable('projects', {
@@ -41,6 +110,8 @@ export const projectTodos = pgTable('project_todos', {
   index('project_todos_project_id_idx').on(t.projectId),
   index('project_todos_status_idx').on(t.status),
   index('project_todos_category_idx').on(t.category),
+  index('project_todos_completed_idx').on(t.completed),
+  index('project_todos_priority_idx').on(t.priority),
 ]));
 
 // Project Changelogs Table
@@ -71,11 +142,13 @@ export const tasks = pgTable('tasks', {
   index('tasks_project_id_idx').on(t.projectId),
   index('tasks_status_idx').on(t.status),
   index('tasks_priority_idx').on(t.priority),
+  index('tasks_start_date_idx').on(t.startDate),
+  index('tasks_end_date_idx').on(t.endDate),
 ]));
 
 // Users <-> Tasks Junction Table
 export const usersToTasks = pgTable('users_to_tasks', {
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   taskId: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
 }, (t) => ([
 
@@ -84,15 +157,57 @@ export const usersToTasks = pgTable('users_to_tasks', {
 ]
 ));
 
+
+// Project Members Table
+export const projectMembers = pgTable('project_members', {
+  projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role').default('member').notNull(), // member, owner, admin
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ([
+  primaryKey({ columns: [t.projectId, t.userId] }),
+  index('project_members_project_id_idx').on(t.projectId),
+  index('project_members_user_id_idx').on(t.userId),
+]));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   tasks: many(usersToTasks),
+  sessions: many(sessions),
+  accounts: many(accounts),
+  projectMemberships: many(projectMembers),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  users: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  users: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
 }));
 
 export const projectsRelations = relations(projects, ({ many }) => ({
   tasks: many(tasks),
   todos: many(projectTodos),
   changelogs: many(projectChangelogs),
+  members: many(projectMembers),
+}));
+
+export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectMembers.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectMembers.userId],
+    references: [users.id],
+  }),
 }));
 
 export const projectTodosRelations = relations(projectTodos, ({ one }) => ({
@@ -127,3 +242,5 @@ export const usersToTasksRelations = relations(usersToTasks, ({ one }) => ({
     references: [tasks.id],
   }),
 }));
+
+

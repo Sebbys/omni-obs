@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useCreateProject, useUpdateProject, type Project } from "@/hooks/use-projects"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 interface ProjectModalProps {
     open: boolean
@@ -45,6 +46,9 @@ export function ProjectModal({ open, onOpenChange, project }: ProjectModalProps)
             <DialogContent className="bg-card border-border max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-foreground">{project ? "Edit Project" : "Create Project"}</DialogTitle>
+                    <VisuallyHidden>
+                        <DialogDescription>{project ? "Edit existing project details" : "Enter details for new project"}</DialogDescription>
+                    </VisuallyHidden>
                 </DialogHeader>
 
                 <form key={project?.id || 'create'} onSubmit={handleSubmit} className="space-y-4">

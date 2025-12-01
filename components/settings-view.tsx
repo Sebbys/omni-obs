@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { authClient } from "@/lib/auth-client"
+import { getInitials } from "@/lib/utils"
 
 export function SettingsView() {
     const [notifications, setNotifications] = useState({
@@ -15,6 +17,9 @@ export function SettingsView() {
         push: false,
         weekly: true,
     })
+    
+    const { data: session } = authClient.useSession()
+    const user = session?.user
 
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-4xl">
@@ -40,8 +45,10 @@ export function SettingsView() {
                         <CardContent className="space-y-6">
                             <div className="flex items-center gap-4">
                                 <Avatar className="w-16 h-16">
-                                    <AvatarImage src="/placeholder-user.jpg" />
-                                    <AvatarFallback>JD</AvatarFallback>
+                                    <AvatarImage src={user?.image || undefined} />
+                                    <AvatarFallback>
+                                        {user?.name ? getInitials(user.name) : "U"}
+                                    </AvatarFallback>
                                 </Avatar>
                                 <Button variant="outline" size="sm">
                                     Change avatar
@@ -49,21 +56,18 @@ export function SettingsView() {
                             </div>
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="firstName">First Name</Label>
-                                    <Input id="firstName" defaultValue="John" />
+                                    <Label htmlFor="firstName">Full Name</Label>
+                                    <Input id="firstName" defaultValue={user?.name || ""} />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="lastName">Last Name</Label>
-                                    <Input id="lastName" defaultValue="Doe" />
-                                </div>
+                                {/* Removed Last Name splitting for simplicity, keeping it consistent with Better Auth "name" field */}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" defaultValue="john@company.com" />
+                                <Input id="email" type="email" defaultValue={user?.email || ""} disabled />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="role">Role</Label>
-                                <Input id="role" defaultValue="Software Engineer" />
+                                <Input id="role" defaultValue={user?.role || "user"} disabled />
                             </div>
                             <Button>Save Changes</Button>
                         </CardContent>

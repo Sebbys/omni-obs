@@ -1,30 +1,49 @@
-export enum Priority {
-    HIGH = "High",
-    MEDIUM = "Medium",
-    LOW = "Low",
-}
-
 export interface User {
-    id: string
-    name: string
-    avatar: string
+  id: string
+  name: string
+  email: string
+  emailVerified: boolean
+  image?: string | null
+  createdAt: Date
+  updatedAt: Date
+  role?: string | null
+  banned?: boolean | null
+  banReason?: string | null
+  banExpires?: Date | null
 }
 
-export interface Task {
-    id: string
-    title: string
-    dateRange: string
-    priority: Priority
-    progress: number
-    assignees: User[]
-    row: number
-    startDay: number
-    span: number
-    color: string
+export interface Session {
+  id: string
+  expiresAt: Date
+  token: string
+  createdAt: Date
+  updatedAt: Date
+  ipAddress?: string | null
+  userAgent?: string | null
+  userId: string
 }
 
-export interface DayColumn {
-    name: string
-    date: number
-    isToday: boolean
+export interface Account {
+  id: string
+  accountId: string
+  providerId: string
+  userId: string
+  accessToken?: string | null
+  refreshToken?: string | null
+  idToken?: string | null
+  accessTokenExpiresAt?: Date | null
+  refreshTokenExpiresAt?: Date | null
+  scope?: string | null
+  password?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Verification {
+  id: string
+  identifier: string
+  value: string
+  expiresAt: Date
+  createdAt?: Date | null
+  updatedAt?: Date | null
 }

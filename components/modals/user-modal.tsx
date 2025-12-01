@@ -6,8 +6,9 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useCreateUser, useUpdateUser, type User } from "@/hooks/use-users"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 interface UserModalProps {
     open: boolean
@@ -22,7 +23,7 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
     const [formData, setFormData] = useState({
         name: user?.name || "",
         email: user?.email || "",
-        avatarUrl: user?.avatarUrl || "",
+        image: user?.image || "",
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +32,7 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
         const payload = {
             name: formData.name,
             email: formData.email,
-            avatarUrl: formData.avatarUrl || undefined,
+            avatarUrl: formData.image || undefined, // Passing as avatarUrl to match use-users hook input type which maps to image in action
         }
 
         if (user) {
@@ -48,6 +49,9 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
             <DialogContent className="bg-card border-border max-w-md">
                 <DialogHeader>
                     <DialogTitle className="text-foreground">{user ? "Edit User" : "Add User"}</DialogTitle>
+                    <VisuallyHidden>
+                        <DialogDescription>{user ? "Edit existing user details" : "Enter details for new user"}</DialogDescription>
+                    </VisuallyHidden>
                 </DialogHeader>
 
                 <form key={user?.id || 'create'} onSubmit={handleSubmit} className="space-y-4">
@@ -79,8 +83,8 @@ export function UserModal({ open, onOpenChange, user }: UserModalProps) {
                         <Input
                             id="avatarUrl"
                             type="url"
-                            value={formData.avatarUrl}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, avatarUrl: e.target.value }))}
+                            value={formData.image}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
                             placeholder="https://example.com/avatar.jpg"
                         />
                     </div>

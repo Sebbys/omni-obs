@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import {
     DndContext,
+    defaultDropAnimationSideEffects,
     DragOverlay,
     closestCorners,
     KeyboardSensor,
@@ -11,6 +12,13 @@ import {
     useSensors,
     DragStartEvent,
     DragEndEvent,
+    DragOverEvent,
+    DropAnimation,
+    MeasuringStrategy,
+    pointerWithin,
+    rectIntersection,
+    getFirstCollision,
+    CollisionDetection,
 } from "@dnd-kit/core"
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -20,6 +28,7 @@ import { KanbanCard } from "./kanban-card"
 import { AddTodoForm } from "./add-todo-form"
 import { TodoSkeleton } from "./todo-skeleton"
 import { toast } from "sonner"
+import { useCallback, useRef } from "react"
 
 interface Todo {
     id: string
@@ -43,17 +52,32 @@ const COLUMNS = [
     { id: "done", title: "Done" },
 ]
 
+const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+        styles: {
+            active: {
+                opacity: "0.5",
+            },
+        },
+    }),
+}
+
 export function KanbanBoard({ projectId }: KanbanBoardProps) {
     const queryClient = useQueryClient()
     const [activeId, setActiveId] = useState<string | null>(null)
+    const lastOverId = useRef<string | null>(null)
 
-    const { data: todos = [], isLoading } = useQuery<Todo[]>({
+    const { data: todos = [], isLoading, error } = useQuery<Todo[]>({
         queryKey: ["project-todos", projectId],
         queryFn: () => getProjectTodos(projectId) as Promise<Todo[]>,
     })
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5, // Keep it responsive
+            },
+        }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
@@ -70,12 +94,61 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             if (cols[todo.status]) {
                 cols[todo.status].push(todo)
             } else {
-                // Fallback for unknown status
                 cols.todo.push(todo)
             }
         })
         return cols
     }, [todos])
+
+    const collisionDetectionStrategy: CollisionDetection = useCallback(
+        (args) => {
+            if (activeId && activeId in columns) {
+                return closestCorners(args)
+            }
+
+            // First, let's see if there are any collisions with the pointer
+            const pointerIntersections = pointerWithin(args)
+            const intersections =
+                pointerIntersections.length > 0
+                    ? pointerIntersections
+                    : rectIntersection(args)
+
+            let overId = getFirstCollision(intersections, "id")
+
+            if (overId != null) {
+                if (overId in columns) {
+                    const containerItems = columns[overId]
+
+                    // If a container is matched and it contains items (columns 'todo', 'in_progress', etc)
+                    if (containerItems.length > 0) {
+                        // Return the closest droppable within that container
+                        overId = closestCorners({
+                            ...args,
+                            droppableContainers: args.droppableContainers.filter(
+                                (container) =>
+                                    container.id !== overId &&
+                                    columns[overId as string]?.some((t) => t.id === container.id)
+                            ),
+                        })[0]?.id
+                    }
+                }
+
+                lastOverId.current = overId as string
+                return [{ id: overId }]
+            }
+
+            // When a draggable item moves to a new container, the layout may shift
+            // and the `overId` may become null. We manually set the cached `lastOverId`
+            // to the id of the draggable item that was last over the dropped item.
+            if (activeId && lastOverId.current) {
+                // Fallback to closest corner if we lost intersection but still dragging
+                return closestCorners(args)
+            }
+
+            return lastOverId.current ? [{ id: lastOverId.current }] : []
+        },
+        [activeId, columns]
+    )
 
     const { mutate: moveTodo } = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -85,6 +158,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             await queryClient.cancelQueries({ queryKey: ["project-todos", projectId] })
             const previousTodos = queryClient.getQueryData<Todo[]>(["project-todos", projectId])
 
+            // Optimistically update query cache as well
             queryClient.setQueryData<Todo[]>(["project-todos", projectId], (old) => {
                 return old?.map((t) => (t.id === id ? { ...t, status: status as "todo" | "in_progress" | "review" | "done" } : t))
             })
@@ -95,7 +169,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             if (context?.previousTodos) {
                 queryClient.setQueryData(["project-todos", projectId], context.previousTodos)
             }
-            toast.error("Failed to move todo")
+            toast.error(err.message || "Failed to move todo")
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["project-todos", projectId] })
@@ -120,7 +194,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             if (context?.previousTodos) {
                 queryClient.setQueryData(["project-todos", projectId], context.previousTodos)
             }
-            toast.error("Failed to delete todo")
+            toast.error(err.message || "Failed to delete todo")
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["project-todos", projectId] })
@@ -132,27 +206,96 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         setActiveId(event.active.id as string)
     }
 
-    function handleDragEnd(event: DragEndEvent) {
+    function handleDragOver(event: DragOverEvent) {
         const { active, over } = event
-
         if (!over) return
 
         const activeId = active.id as string
         const overId = over.id as string
 
-        const activeTodo = todos.find((t) => t.id === activeId)
-        if (!activeTodo) return
+        if (activeId === overId) return
+
+        const isActiveTask = active.data.current?.type === "Task"
+        const isOverTask = over.data.current?.type === "Task"
+        const isOverColumn = over.data.current?.type === "Column"
+
+        if (!isActiveTask) return
+
+        // Im dropping a Task over another Task
+        if (isActiveTask && isOverTask) {
+            queryClient.setQueryData<Todo[]>(["project-todos", projectId], (items) => {
+                if (!items) return []
+                const activeIndex = items.findIndex((t) => t.id === activeId)
+                const overIndex = items.findIndex((t) => t.id === overId)
+
+                if (items[activeIndex].status !== items[overIndex].status) {
+                    const newItems = [...items]
+                    newItems[activeIndex] = { ...newItems[activeIndex], status: items[overIndex].status }
+                    return arrayMove(newItems, activeIndex, overIndex - 1 >= 0 ? overIndex - 1 : 0)
+                }
+
+                return arrayMove(items, activeIndex, overIndex)
+            })
+        }
+
+        // Im dropping a Task over a Column
+        if (isActiveTask && isOverColumn) {
+            queryClient.setQueryData<Todo[]>(["project-todos", projectId], (items) => {
+                if (!items) return []
+                const activeIndex = items.findIndex((t) => t.id === activeId)
+                if (items[activeIndex].status !== overId) {
+                    const newItems = [...items]
+                    newItems[activeIndex] = { ...newItems[activeIndex], status: overId as "todo" | "in_progress" | "review" | "done" }
+                    return arrayMove(newItems, activeIndex, activeIndex)
+                }
+                return items
+            })
+        }
+    }
+
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event
+
+        if (!over) {
+            setActiveId(null)
+            return
+        }
+
+        const activeId = active.id as string
+        const overId = over.id as string
+
+        // Retrieve original status from the drag start snapshot
+        // active.data.current contains the data passed to useSortable at the START of the drag
+        const originalTodo = active.data.current as Todo | undefined
+        const originalStatus = originalTodo?.status
+
+        // Find current status from the cache (which was updated by DragOver)
+        const currentTodos = queryClient.getQueryData<Todo[]>(["project-todos", projectId])
+        const currentTodo = currentTodos?.find((t) => t.id === activeId)
+
+        if (!currentTodo) {
+            setActiveId(null)
+            return
+        }
 
         // If dropped over a column container
         if (COLUMNS.some((col) => col.id === overId)) {
-            if (activeTodo.status !== overId) {
+            // If the status changed compared to ORIGINAL status, persist it
+            if (originalStatus !== overId) {
                 moveTodo({ id: activeId, status: overId })
             }
         } else {
             // If dropped over another item
-            const overTodo = todos.find((t) => t.id === overId)
-            if (overTodo && activeTodo.status !== overTodo.status) {
-                moveTodo({ id: activeId, status: overTodo.status })
+            // We need to check if the status changed.
+            // Since we don't persist order, we only care if status changed.
+            // The 'over' item might be in a different column.
+
+            // However, handleDragOver has already updated the status in the cache.
+            // So currentTodo.status is already the new status.
+            // We should compare originalStatus with currentTodo.status
+
+            if (originalStatus && currentTodo.status !== originalStatus) {
+                moveTodo({ id: activeId, status: currentTodo.status })
             }
         }
 
@@ -161,6 +304,14 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
 
     if (isLoading) {
         return <TodoSkeleton />
+    }
+
+    if (error) {
+        return (
+            <div className="p-4 text-red-500 bg-red-50 rounded-md">
+                Error loading todos: {error.message}
+            </div>
+        )
     }
 
     const activeTodo = activeId ? todos.find((t) => t.id === activeId) : null
@@ -176,7 +327,13 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                 sensors={sensors}
                 collisionDetection={closestCorners}
                 onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
+                measuring={{
+                    droppable: {
+                        strategy: MeasuringStrategy.Always,
+                    },
+                }}
             >
                 <div className="flex gap-4 overflow-x-auto pb-4">
                     {COLUMNS.map((col) => (
@@ -190,8 +347,12 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                     ))}
                 </div>
 
-                <DragOverlay>
-                    {activeTodo ? <KanbanCard todo={activeTodo} onDelete={() => { }} /> : null}
+                <DragOverlay dropAnimation={dropAnimation}>
+                    {activeTodo ? (
+                        <div className="rotate-2 scale-105 cursor-grabbing">
+                            <KanbanCard todo={activeTodo} onDelete={() => { }} />
+                        </div>
+                    ) : null}
                 </DragOverlay>
             </DndContext>
         </div>

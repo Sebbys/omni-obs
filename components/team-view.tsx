@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useUsers, useDeleteUser, type User } from "@/hooks/use-users"
 import { UserModal } from "@/components/modals/user-modal"
+import { TeamSkeleton } from "@/components/skeletons/team-skeleton"
 
 export function TeamView() {
     const { data: users, isLoading, error } = useUsers()
@@ -40,11 +41,7 @@ export function TeamView() {
                 </Button>
             </div>
 
-            {isLoading && (
-                <div className="flex justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                </div>
-            )}
+            {isLoading && <TeamSkeleton />}
 
             {error && (
                 <div className="text-center text-destructive py-8">
@@ -77,7 +74,7 @@ export function TeamView() {
                         </CardHeader>
                         <CardContent className="flex items-center gap-4">
                             <Avatar className="h-12 w-12">
-                                <AvatarImage src={user.avatarUrl || undefined} alt={user.name} />
+                                <AvatarImage src={user.image || undefined} alt={user.name} />
                                 <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
                             <div>

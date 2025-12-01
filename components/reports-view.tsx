@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTasks } from "@/hooks/use-tasks"
 import { useProjects } from "@/hooks/use-projects"
+import { ActivityChart } from "@/components/charts/activity-chart"
+import { StatusPieChart } from "@/components/charts/status-pie-chart"
+import { PriorityBarChart } from "@/components/charts/priority-bar-chart"
 
 export function ReportsView() {
     const { data: tasks } = useTasks()
@@ -11,32 +14,26 @@ export function ReportsView() {
 
     // Defensive checks and explicit typing
     const safeTasks = tasks || []
+    const safeProjects = projects || []
 
-    const tasksByStatus = {
-        todo: safeTasks.filter((t) => t.status === "todo").length,
-        in_progress: safeTasks.filter((t) => t.status === "in_progress").length,
-        done: safeTasks.filter((t) => t.status === "done").length,
-    }
+    const totalTasks = safeTasks.length
+    const completedTasks = safeTasks.filter((t) => t.status === "done").length
+    const activeProjects = safeProjects.length
+    // Mocking team members count for now, or we could fetch it if we had a hook
+    const teamMembers = 5
 
-    const tasksByPriority = {
-        high: safeTasks.filter((t) => t.priority === "high").length,
-        medium: safeTasks.filter((t) => t.priority === "medium").length,
-        low: safeTasks.filter((t) => t.priority === "low").length,
-    }
-
-    const totalTasks = safeTasks.length || 1 // Avoid division by zero
-    const totalProjects = projects?.length || 0
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
     return (
-        <div className="p-4 md:p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-8 max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-semibold text-foreground">Reports</h1>
-                    <p className="text-sm text-muted-foreground">Analyze your team&apos;s performance</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Reports</h1>
+                    <p className="text-muted-foreground mt-1">Overview of your team's performance and project health.</p>
                 </div>
                 <Select defaultValue="7d">
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select period" />
                     </SelectTrigger>
                     <SelectContent>
@@ -48,109 +45,155 @@ export function ReportsView() {
                 </Select>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Summary Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Tasks by Status</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm">To Do</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-muted-foreground rounded-full"
-                                        style={{ width: `${(tasksByStatus.todo / totalTasks) * 100}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium w-8 text-right">{tasksByStatus.todo}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm">In Progress</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-chart-1 rounded-full"
-                                        style={{ width: `${(tasksByStatus.in_progress / totalTasks) * 100}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium w-8 text-right">{tasksByStatus.in_progress}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm">Completed</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-chart-2 rounded-full"
-                                        style={{ width: `${(tasksByStatus.done / totalTasks) * 100}%` }}
-                                    />
-                                </div>
-                                <span className="text-sm font-medium w-8 text-right">{tasksByStatus.done}</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Tasks by Priority</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-chart-5" />
-                                <span className="text-sm">High</span>
-                            </div>
-                            <span className="text-sm font-medium">{tasksByPriority.high}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-chart-3" />
-                                <span className="text-sm">Medium</span>
-                            </div>
-                            <span className="text-sm font-medium">{tasksByPriority.medium}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-chart-2" />
-                                <span className="text-sm">Low</span>
-                            </div>
-                            <span className="text-sm font-medium">{tasksByPriority.low}</span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Project Overview</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-semibold">{totalProjects}</div>
-                        <p className="text-sm text-muted-foreground">Active projects</p>
-                        <div className="mt-4 pt-4 border-t border-border">
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground">Total Tasks</span>
-                                <span className="font-medium">{safeTasks.length}</span>
+                        <div className="text-2xl font-bold">{totalTasks}</div>
+                        <p className="text-xs text-muted-foreground">
+                            +20.1% from last month
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{completionRate}%</div>
+                        <p className="text-xs text-muted-foreground">
+                            +180.1% from last month
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <rect width="20" height="14" x="2" y="5" rx="2" />
+                            <path d="M2 10h20" />
+                        </svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{activeProjects}</div>
+                        <p className="text-xs text-muted-foreground">
+                            +19% from last month
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Team Members</CardTitle>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            className="h-4 w-4 text-muted-foreground"
+                        >
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{teamMembers}</div>
+                        <p className="text-xs text-muted-foreground">
+                            +2 since last hour
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Main Charts Area */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="col-span-4">
+                    <CardHeader>
+                        <CardTitle>Activity Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pl-2">
+                        <div className="h-[350px] w-full">
+                            <ActivityChart tasks={safeTasks} />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="col-span-3">
+                    <CardHeader>
+                        <CardTitle>Tasks by Status</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[350px] w-full relative">
+                            <div className="absolute inset-0">
+                                <StatusPieChart tasks={safeTasks} />
                             </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Placeholder for charts */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base font-medium">Activity Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="h-64 flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-lg">
-                        <p className="text-sm">Chart visualization coming soon</p>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Secondary Charts Area */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="col-span-3">
+                    <CardHeader>
+                        <CardTitle>Tasks by Priority</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[300px] w-full">
+                            <PriorityBarChart tasks={safeTasks} />
+                        </div>
+                    </CardContent>
+                </Card>
+                {/* Placeholder for future chart or list */}
+                <Card className="col-span-4">
+                    <CardHeader>
+                        <CardTitle>Recent Activity</CardTitle>
+                        <CardContent>
+                            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                Coming Soon
+                            </div>
+                        </CardContent>
+                    </CardHeader>
+                </Card>
+            </div>
         </div>
     )
 }

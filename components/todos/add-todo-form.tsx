@@ -41,8 +41,8 @@ export function AddTodoForm({ projectId }: AddTodoFormProps) {
             queryClient.invalidateQueries({ queryKey: ["project-todos", projectId] })
             toast.success("Todo added")
         },
-        onError: () => {
-            toast.error("Failed to add todo")
+        onError: (err) => {
+            toast.error(err.message || "Failed to add todo")
         },
     })
 

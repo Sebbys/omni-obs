@@ -14,8 +14,11 @@ import {
     Activity,
     Calendar,
     Bell,
+    Search,
+    Bot,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 
 interface NavItemProps {
     href: string
@@ -65,6 +68,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
     const managementItems = [
         { href: "/reports", icon: BarChart3, label: "Reports" },
+        { href: "/agent-workflow", icon: Bot, label: "Agent Swarm" },
         { href: "/notifications", icon: Bell, label: "Notifications", badge: "3" },
     ]
 
@@ -83,6 +87,19 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                 <div>
                     <h1 className="text-sm font-semibold text-foreground">TeamPulse</h1>
                     <p className="text-xs text-muted-foreground">Monitoring</p>
+                </div>
+            </div>
+
+            <div className="px-3 py-2">
+                <div className="relative">
+                    <Search className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search..."
+                        className="pl-8 h-9 bg-accent/50 border-transparent focus:bg-background focus:border-input transition-all"
+                    />
+                    <kbd className="absolute right-2 top-2.5 hidden md:flex items-center gap-0.5 text-[10px] text-muted-foreground opacity-50">
+                        <span className="text-xs">⌘</span>K
+                    </kbd>
                 </div>
             </div>
 
