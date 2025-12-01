@@ -5,10 +5,22 @@ import { tasks, usersToTasks } from "@/db/schema"
 import { eq, and, gte, lte, desc } from "drizzle-orm"
 import { revalidatePath, revalidateTag, cacheTag } from "next/cache"
 
+import { auth } from "@/lib/auth"
+import { headers } from "next/headers"
+
+async function getSession() {
+  return await auth.api.getSession({
+    headers: await headers()
+  })
+}
+
 export async function getTasks(startDate?: string, endDate?: string) {
   "use cache"
   cacheTag("tasks")
   try {
+    const session = await getSession()
+    if (!session) return []
+
     const whereConditions = []
     if (startDate) whereConditions.push(gte(tasks.startDate, new Date(startDate)))
     if (endDate) whereConditions.push(lte(tasks.endDate, new Date(endDate)))
@@ -67,6 +79,9 @@ export async function createTask(data: {
   assigneeIds?: string[]
 }) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     const [newTask] = await db.insert(tasks).values({
       title: data.title,
       description: data.description,
@@ -92,16 +107,16 @@ export async function createTask(data: {
     // But to match the type Task, we need the structure.
     // Let's fetch it fresh to be safe.
     const [createdTask] = await db.query.tasks.findMany({
-        where: eq(tasks.id, newTask.id),
-        with: {
-            project: true,
-            assignees: { with: { user: true } }
-        }
+      where: eq(tasks.id, newTask.id),
+      with: {
+        project: true,
+        assignees: { with: { user: true } }
+      }
     })
 
     if (!createdTask) throw new Error("Failed to retrieve created task")
 
-     return {
+    return {
       id: createdTask.id,
       title: createdTask.title,
       description: createdTask.description,
@@ -144,6 +159,9 @@ export async function updateTask(id: string, data: {
   assigneeIds?: string[]
 }) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     await db.update(tasks)
       .set({
         ...data,
@@ -168,17 +186,17 @@ export async function updateTask(id: string, data: {
     }
 
     revalidatePath("/tasks")
-     const [freshTask] = await db.query.tasks.findMany({
-        where: eq(tasks.id, id),
-        with: {
-            project: true,
-            assignees: { with: { user: true } }
-        }
+    const [freshTask] = await db.query.tasks.findMany({
+      where: eq(tasks.id, id),
+      with: {
+        project: true,
+        assignees: { with: { user: true } }
+      }
     })
 
     if (!freshTask) throw new Error("Failed to retrieve updated task")
 
-     return {
+    return {
       id: freshTask.id,
       title: freshTask.title,
       description: freshTask.description,
@@ -210,6 +228,9 @@ export async function updateTask(id: string, data: {
 
 export async function deleteTask(id: string) {
   try {
+    const session = await getSession()
+    if (!session) throw new Error("Unauthorized")
+
     await db.delete(tasks).where(eq(tasks.id, id))
     revalidatePath("/tasks")
   } catch (error) {

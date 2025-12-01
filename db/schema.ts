@@ -153,11 +153,25 @@ export const usersToTasks = pgTable('users_to_tasks', {
 ]
 ));
 
+
+// Project Members Table
+export const projectMembers = pgTable('project_members', {
+  projectId: uuid('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role').default('member').notNull(), // member, owner, admin
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ([
+  primaryKey({ columns: [t.projectId, t.userId] }),
+  index('project_members_project_id_idx').on(t.projectId),
+  index('project_members_user_id_idx').on(t.userId),
+]));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   tasks: many(usersToTasks),
   sessions: many(sessions),
   accounts: many(accounts),
+  projectMemberships: many(projectMembers),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -178,6 +192,18 @@ export const projectsRelations = relations(projects, ({ many }) => ({
   tasks: many(tasks),
   todos: many(projectTodos),
   changelogs: many(projectChangelogs),
+  members: many(projectMembers),
+}));
+
+export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectMembers.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectMembers.userId],
+    references: [users.id],
+  }),
 }));
 
 export const projectTodosRelations = relations(projectTodos, ({ one }) => ({

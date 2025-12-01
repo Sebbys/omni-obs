@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 config({ path: '.env' });
 
 import { db } from '../db';
-import { users, projects, tasks, usersToTasks, projectTodos, projectChangelogs } from '../db/schema';
+import { users, projects, tasks, usersToTasks, projectTodos, projectChangelogs, projectMembers } from '../db/schema';
 import { addDays, subDays } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid'; // Use uuid for consistent ID generation
 
@@ -19,6 +19,7 @@ async function seed() {
     await db.delete(tasks);
     await db.delete(projectTodos);
     await db.delete(projectChangelogs);
+    await db.delete(projectMembers);
     await db.delete(projects);
     await db.delete(users);
 
@@ -89,6 +90,23 @@ async function seed() {
       { name: 'Internal Dashboard', description: 'Build analytics dashboard for the sales team.', color: '#ec4899' }, // Pink
     ]).returning();
 
+    // Assign Users to Projects (Project Members)
+    console.log('👥 Assigning users to projects...');
+    const projectMembersData = [];
+    for (const project of insertedProjects) {
+      // Assign all users to all projects for now to facilitate testing
+      // In a real scenario, you'd pick a subset
+      for (const user of insertedUsers) {
+        projectMembersData.push({
+          projectId: project.id,
+          userId: user.id,
+          role: 'member', // Default role
+        });
+      }
+    }
+    await db.insert(projectMembers).values(projectMembersData);
+
+
     const allTasks = [];
     const allProjectTodos = [];
     const allChangelogs = [];
@@ -107,8 +125,8 @@ async function seed() {
       const taskCount = 5 + Math.floor(Math.random() * 3);
 
       for (let i = 0; i < taskCount; i++) {
-        const status = ['todo', 'in_progress', 'review', 'done'][Math.floor(Math.random() * 4)] as any;
-        const priority = ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as any;
+        const status = ['todo', 'in_progress', 'review', 'done'][Math.floor(Math.random() * 4)] as "todo" | "in_progress" | "review" | "done";
+        const priority = ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as "low" | "medium" | "high";
 
         const startDate = subDays(new Date(), Math.floor(Math.random() * 10));
         const endDate = addDays(startDate, 2 + Math.floor(Math.random() * 14));
@@ -133,9 +151,9 @@ async function seed() {
       // Generate Todos
       const todoCount = 8;
       for (let i = 0; i < todoCount; i++) {
-        const status = ['todo', 'in_progress', 'review', 'done'][Math.floor(Math.random() * 4)] as any;
-        const category = ['bug', 'feature', 'enhancement', 'documentation', 'design', 'other'][Math.floor(Math.random() * 6)] as any;
-        const priority = ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as any;
+        const status = ['todo', 'in_progress', 'review', 'done'][Math.floor(Math.random() * 4)] as "todo" | "in_progress" | "review" | "done";
+        const category = ['bug', 'feature', 'enhancement', 'documentation', 'design', 'other'][Math.floor(Math.random() * 6)] as "bug" | "feature" | "enhancement" | "documentation" | "design" | "other";
+        const priority = ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as "low" | "medium" | "high";
 
         allProjectTodos.push({
           projectId: project.id,

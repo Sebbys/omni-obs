@@ -1,12 +1,42 @@
 "use server"
 
 import { db } from "@/db"
-import { projectTodos } from "@/db/schema"
-import { eq, desc } from "drizzle-orm"
+import { projectTodos, projectMembers } from "@/db/schema"
+import { eq, desc, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/lib/auth"
+import { headers } from "next/headers"
+
+async function checkProjectMembership(projectId: string) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+
+    if (!session) {
+        throw new Error("Unauthorized")
+    }
+
+    // console.log(`Checking membership for user ${session.user.id} in project ${projectId}`)
+
+    const membership = await db.query.projectMembers.findFirst({
+        where: and(
+            eq(projectMembers.projectId, projectId),
+            eq(projectMembers.userId, session.user.id)
+        )
+    })
+
+    if (!membership) {
+        console.error(`Membership check failed for user ${session.user.id} in project ${projectId}`)
+        throw new Error("Forbidden: You are not a member of this project")
+    }
+
+    return session.user
+}
 
 export async function getProjectTodos(projectId: string) {
     try {
+        await checkProjectMembership(projectId)
+
         const todos = await db.query.projectTodos.findMany({
             where: eq(projectTodos.projectId, projectId),
             orderBy: [desc(projectTodos.createdAt)],
@@ -17,7 +47,7 @@ export async function getProjectTodos(projectId: string) {
         }))
     } catch (error) {
         console.error("Failed to fetch project todos:", error)
-        throw new Error("Failed to fetch project todos")
+        throw error // Re-throw to handle in UI
     }
 }
 
@@ -28,6 +58,8 @@ export async function createTodo(
     priority: "low" | "medium" | "high" = "medium"
 ) {
     try {
+        await checkProjectMembership(projectId)
+
         const [newTodo] = await db.insert(projectTodos).values({
             projectId,
             content,
@@ -43,7 +75,7 @@ export async function createTodo(
         }
     } catch (error) {
         console.error("Failed to create todo:", error)
-        throw new Error("Failed to create todo")
+        throw error
     }
 }
 
@@ -57,6 +89,18 @@ export async function updateTodo(
     }
 ) {
     try {
+        // First fetch the todo to get the projectId
+        const todo = await db.query.projectTodos.findFirst({
+            where: eq(projectTodos.id, id),
+            columns: { projectId: true }
+        })
+
+        if (!todo) {
+            throw new Error("Todo not found")
+        }
+
+        await checkProjectMembership(todo.projectId)
+
         const [updatedTodo] = await db.update(projectTodos)
             .set({
                 ...updates,
@@ -75,16 +119,28 @@ export async function updateTodo(
         }
     } catch (error) {
         console.error("Failed to update todo:", error)
-        throw new Error("Failed to update todo")
+        throw error
     }
 }
 
 export async function deleteTodo(id: string) {
     try {
+        // First fetch the todo to get the projectId
+        const todo = await db.query.projectTodos.findFirst({
+            where: eq(projectTodos.id, id),
+            columns: { projectId: true }
+        })
+
+        if (!todo) {
+            throw new Error("Todo not found")
+        }
+
+        await checkProjectMembership(todo.projectId)
+
         await db.delete(projectTodos).where(eq(projectTodos.id, id))
         revalidatePath("/projects")
     } catch (error) {
         console.error("Failed to delete todo:", error)
-        throw new Error("Failed to delete todo")
+        throw error
     }
 }

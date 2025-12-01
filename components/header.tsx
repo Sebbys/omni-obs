@@ -43,22 +43,6 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
                     <Menu className="w-5 h-5" />
                 </Button>
-
-                {/* Search - Hidden on mobile */}
-                <div className="hidden sm:flex items-center relative">
-                    <Search className="absolute left-3 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder="Search..."
-                        className={`w-48 md:w-64 pl-9 pr-12 h-9 bg-background transition-all ${searchFocused ? "w-64 md:w-80" : ""
-                            }`}
-                        onFocus={() => setSearchFocused(true)}
-                        onBlur={() => setSearchFocused(false)}
-                    />
-                    <kbd className="absolute right-2 hidden md:flex items-center gap-0.5 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        <Command className="w-3 h-3" />K
-                    </kbd>
-                </div>
             </div>
 
             {/* Right side */}

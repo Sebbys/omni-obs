@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     DndContext,
     defaultDropAnimationSideEffects,
@@ -67,10 +67,16 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
     const [activeId, setActiveId] = useState<string | null>(null)
     const lastOverId = useRef<string | null>(null)
 
-    const { data: todos = [], isLoading } = useQuery<Todo[]>({
+    const { data: todos = [], isLoading, error } = useQuery<Todo[]>({
         queryKey: ["project-todos", projectId],
         queryFn: () => getProjectTodos(projectId) as Promise<Todo[]>,
     })
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error.message || "Failed to load todos")
+        }
+    }, [error])
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -169,7 +175,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             if (context?.previousTodos) {
                 queryClient.setQueryData(["project-todos", projectId], context.previousTodos)
             }
-            toast.error("Failed to move todo")
+            toast.error(err.message || "Failed to move todo")
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["project-todos", projectId] })
@@ -194,7 +200,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             if (context?.previousTodos) {
                 queryClient.setQueryData(["project-todos", projectId], context.previousTodos)
             }
-            toast.error("Failed to delete todo")
+            toast.error(err.message || "Failed to delete todo")
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["project-todos", projectId] })

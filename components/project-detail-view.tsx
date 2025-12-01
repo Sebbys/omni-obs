@@ -24,6 +24,7 @@ export function ProjectDetailView({ projectId, initialProject }: ProjectDetailVi
     queryKey: ["projects"], // Global key, will filter client-side
     queryFn: () => getProjects(),
     initialData: initialProject ? [initialProject] : undefined, // Hydrate with initial data
+    staleTime: 0, // Always refetch to ensure RBAC is up to date
   })
 
   const project = projects?.find((p: Project) => p.id === projectId)
