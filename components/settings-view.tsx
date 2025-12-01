@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { authClient } from "@/lib/auth-client"
 import { getInitials } from "@/lib/utils"
+import { EmailTestButton } from "@/components/email-test-button"
 
 export function SettingsView() {
     const [notifications, setNotifications] = useState({
@@ -17,7 +18,7 @@ export function SettingsView() {
         push: false,
         weekly: true,
     })
-    
+
     const { data: session } = authClient.useSession()
     const user = session?.user
 
@@ -110,6 +111,17 @@ export function SettingsView() {
                                     checked={notifications.weekly}
                                     onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, weekly: checked }))}
                                 />
+                            </div>
+
+                            <div className="pt-4 border-t">
+                                <h4 className="mb-4 text-sm font-medium">Test Configuration</h4>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-medium">Test Email</p>
+                                        <p className="text-sm text-muted-foreground">Send a test email to verify configuration</p>
+                                    </div>
+                                    <EmailTestButton />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

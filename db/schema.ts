@@ -4,6 +4,7 @@ import { relations } from 'drizzle-orm';
 // Enums
 export const priorityEnum = pgEnum('priority', ['low', 'medium', 'high']);
 export const statusEnum = pgEnum('status', ['todo', 'in_progress', 'review', 'done']);
+export const emailStatusEnum = pgEnum('email_status', ['sent', 'failed', 'pending']);
 
 // Users Table (Better Auth Compatible)
 export const users = pgTable('user', {
@@ -244,3 +245,16 @@ export const usersToTasksRelations = relations(usersToTasks, ({ one }) => ({
 }));
 
 
+
+// Email Logs Table
+export const emailLogs = pgTable('email_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  recipient: text('recipient').notNull(),
+  subject: text('subject').notNull(),
+  body: text('body'),
+  status: emailStatusEnum('status').default('pending').notNull(),
+  error: text('error'),
+  sentAt: timestamp('sent_at'),
+  metadata: text('metadata'), // Storing as JSON string for simplicity
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

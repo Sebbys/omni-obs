@@ -1,9 +1,10 @@
 ﻿"use server"
 
 import { db } from "@/db"
-import { tasks, usersToTasks } from "@/db/schema"
-import { eq, and, gte, lte, desc } from "drizzle-orm"
+import { tasks, usersToTasks, users, projects } from "@/db/schema"
+import { eq, and, gte, lte, desc, inArray } from "drizzle-orm"
 import { revalidatePath, revalidateTag, cacheTag } from "next/cache"
+import { sendEmail } from "@/lib/email"
 
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
@@ -104,6 +105,31 @@ export async function createTask(data: {
           taskId: newTask.id,
         }))
       )
+
+      // Send email notifications
+      const assignedUsers = await db.query.users.findMany({
+        where: inArray(users.id, data.assigneeIds),
+      })
+
+      const project = await db.query.projects.findFirst({
+        where: eq(projects.id, data.projectId || ""),
+      })
+
+      await Promise.all(assignedUsers.map(user =>
+        sendEmail({
+          to: user.email,
+          subject: `New Task Assignment: ${data.title}`,
+          template: {
+            type: 'task-assignment',
+            props: {
+              assigneeName: user.name,
+              taskTitle: data.title,
+              projectName: project?.name || "Unknown Project",
+              taskUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tasks?taskId=${newTask.id}`, // Adjust URL as needed
+            }
+          }
+        })
+      ))
     }
 
     revalidatePath("/tasks")
@@ -187,6 +213,45 @@ export async function updateTask(id: string, data: {
             taskId: id,
           }))
         )
+
+        // Send email notifications to NEWLY assigned users? 
+        // Or all current assignees? 
+        // For simplicity, let's send to all current assignees for now, 
+        // but ideally we should diff. 
+        // Given the "replace" logic, sending to all seems acceptable or at least consistent with "assignment".
+        // To avoid spam, maybe we should only send if it's a new assignment, but we just deleted everything.
+        // Let's send to all provided assigneeIds.
+
+        const assignedUsers = await db.query.users.findMany({
+          where: inArray(users.id, data.assigneeIds),
+        })
+
+        // We need to fetch the task to get the title if it wasn't updated, 
+        // but we can just fetch the fresh task later. 
+        // However, we need project info.
+
+        const currentTask = await db.query.tasks.findFirst({
+          where: eq(tasks.id, id),
+          with: { project: true }
+        })
+
+        if (currentTask) {
+          await Promise.all(assignedUsers.map(user =>
+            sendEmail({
+              to: user.email,
+              subject: `Task Assignment Updated: ${data.title || currentTask.title}`,
+              template: {
+                type: 'task-assignment',
+                props: {
+                  assigneeName: user.name,
+                  taskTitle: data.title || currentTask.title,
+                  projectName: currentTask.project?.name || "Unknown Project",
+                  taskUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tasks?taskId=${id}`,
+                }
+              }
+            })
+          ))
+        }
       }
     }
 
