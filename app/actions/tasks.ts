@@ -14,54 +14,59 @@ async function getSession() {
   })
 }
 
-export async function getTasks(startDate?: string, endDate?: string) {
+async function _getCachedTasks(startDate?: string, endDate?: string) {
   "use cache"
   cacheTag("tasks")
+
+  const whereConditions = []
+  if (startDate) whereConditions.push(gte(tasks.startDate, new Date(startDate)))
+  if (endDate) whereConditions.push(lte(tasks.endDate, new Date(endDate)))
+
+  const data = await db.query.tasks.findMany({
+    where: whereConditions.length ? and(...whereConditions) : undefined,
+    with: {
+      project: true,
+      assignees: {
+        with: {
+          user: true,
+        },
+      },
+    },
+    orderBy: [desc(tasks.createdAt)],
+  })
+
+  return data.map((t) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description,
+    projectId: t.projectId,
+    project: t.project ? {
+      id: t.project.id,
+      name: t.project.name,
+      color: t.project.color,
+    } : null,
+    priority: t.priority,
+    status: t.status,
+    startDate: t.startDate ? t.startDate.toISOString() : "", // Handle potential nulls safely
+    endDate: t.endDate ? t.endDate.toISOString() : "",
+    progress: t.progress,
+    assignees: t.assignees.map((a) => ({
+      id: a.user.id,
+      name: a.user.name,
+      email: a.user.email,
+      avatarUrl: a.user.image,
+    })),
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString(),
+  }))
+}
+
+export async function getTasks(startDate?: string, endDate?: string) {
   try {
     const session = await getSession()
     if (!session) return []
 
-    const whereConditions = []
-    if (startDate) whereConditions.push(gte(tasks.startDate, new Date(startDate)))
-    if (endDate) whereConditions.push(lte(tasks.endDate, new Date(endDate)))
-
-    const data = await db.query.tasks.findMany({
-      where: whereConditions.length ? and(...whereConditions) : undefined,
-      with: {
-        project: true,
-        assignees: {
-          with: {
-            user: true,
-          },
-        },
-      },
-      orderBy: [desc(tasks.createdAt)],
-    })
-
-    return data.map((t) => ({
-      id: t.id,
-      title: t.title,
-      description: t.description,
-      projectId: t.projectId,
-      project: t.project ? {
-        id: t.project.id,
-        name: t.project.name,
-        color: t.project.color,
-      } : null,
-      priority: t.priority,
-      status: t.status,
-      startDate: t.startDate ? t.startDate.toISOString() : "", // Handle potential nulls safely
-      endDate: t.endDate ? t.endDate.toISOString() : "",
-      progress: t.progress,
-      assignees: t.assignees.map((a) => ({
-        id: a.user.id,
-        name: a.user.name,
-        email: a.user.email,
-        avatarUrl: a.user.image,
-      })),
-      createdAt: t.createdAt.toISOString(),
-      updatedAt: t.updatedAt.toISOString(),
-    }))
+    return await _getCachedTasks(startDate, endDate)
   } catch (error) {
     console.error("Failed to fetch tasks:", error)
     throw new Error("Failed to fetch tasks")

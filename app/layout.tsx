@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { AppShell } from "@/components/app-shell"
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import "./globals.css"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
@@ -43,6 +44,7 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={"font-sans antialiased " + geist.variable + " " + geistMono.variable} suppressHydrationWarning>
         <QueryProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
           <Suspense fallback={<Loading />}>
             <AppShell>
               {children}

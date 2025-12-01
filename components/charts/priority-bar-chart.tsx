@@ -9,9 +9,9 @@ interface PriorityBarChartProps {
 }
 
 const PRIORITY_COLORS = {
-  high: "hsl(var(--chart-5))",
-  medium: "hsl(var(--chart-3))",
-  low: "hsl(var(--chart-2))",
+  high: "var(--chart-5)",
+  medium: "var(--chart-3)",
+  low: "var(--chart-2)",
 }
 
 const PRIORITY_LABELS = {
@@ -44,24 +44,28 @@ export function PriorityBarChart({ tasks }: PriorityBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="stroke-border" />
+        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="stroke-muted" />
         <XAxis type="number" hide />
-        <YAxis 
-            dataKey="name" 
-            type="category" 
-            stroke="#888888" 
-            fontSize={12} 
-            tickLine={false} 
-            axisLine={false}
+        <YAxis
+          dataKey="name"
+          type="category"
+          stroke="#888888"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: 'var(--muted-foreground)' }}
+          width={60}
         />
         <Tooltip
-            cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
-            contentStyle={{ 
-                backgroundColor: "hsl(var(--card))", 
-                borderColor: "hsl(var(--border))",
-                borderRadius: "var(--radius)",
-                color: "hsl(var(--card-foreground))"
-            }}
+          cursor={{ fill: 'var(--muted)/0.3' }}
+          contentStyle={{
+            backgroundColor: "var(--popover)",
+            borderColor: "var(--border)",
+            borderRadius: "var(--radius)",
+            color: "var(--popover-foreground)",
+            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)"
+          }}
+          itemStyle={{ color: "var(--foreground)" }}
         />
         <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
           {data.map((entry, index) => (

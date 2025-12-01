@@ -2,7 +2,7 @@ import { ProjectDetailView } from "@/components/project-detail-view"
 import { getProject } from "@/app/actions/projects"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
-import { Loader2 } from "lucide-react"
+import { ProjectDetailSkeleton } from "@/components/skeletons/project-detail-skeleton"
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -23,11 +23,7 @@ async function ProjectDetailsFetcher({ params }: { params: Promise<{ id: string 
 
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense fallback={<ProjectDetailSkeleton />}>
       <ProjectDetailsFetcher params={params} />
     </Suspense>
   )

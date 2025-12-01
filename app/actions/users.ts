@@ -14,19 +14,24 @@ async function getSession() {
   })
 }
 
-export async function getUsers() {
+async function _getCachedUsers() {
   "use cache"
   cacheTag("users")
+
+  const data = await db.select().from(users).orderBy(desc(users.createdAt))
+  return data.map(u => ({
+    ...u,
+    createdAt: u.createdAt ? u.createdAt.toISOString() : new Date().toISOString(),
+    updatedAt: u.updatedAt ? u.updatedAt.toISOString() : new Date().toISOString(),
+  }))
+}
+
+export async function getUsers() {
   try {
     const session = await getSession()
     if (!session) return []
 
-    const data = await db.select().from(users).orderBy(desc(users.createdAt))
-    return data.map(u => ({
-      ...u,
-      createdAt: u.createdAt ? u.createdAt.toISOString() : new Date().toISOString(),
-      updatedAt: u.updatedAt ? u.updatedAt.toISOString() : new Date().toISOString(),
-    }))
+    return await _getCachedUsers()
   } catch (error) {
     console.error("Failed to fetch users:", error)
     // Return empty array instead of throwing to prevent UI crash

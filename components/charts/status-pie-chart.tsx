@@ -9,10 +9,10 @@ interface StatusPieChartProps {
 }
 
 const STATUS_COLORS = {
-  todo: "hsl(var(--muted))",
-  in_progress: "hsl(var(--chart-1))",
-  review: "hsl(var(--chart-3))",
-  done: "hsl(var(--chart-2))",
+  todo: "var(--muted)",
+  in_progress: "var(--chart-1)",
+  review: "var(--chart-3)",
+  done: "var(--chart-2)",
 }
 
 const STATUS_LABELS = {
@@ -45,7 +45,7 @@ export function StatusPieChart({ tasks }: StatusPieChartProps) {
   }, [tasks])
 
   if (data.length === 0) {
-      return <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No data available</div>
+    return <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No data available</div>
   }
 
   return (
@@ -64,20 +64,21 @@ export function StatusPieChart({ tasks }: StatusPieChartProps) {
             <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
           ))}
         </Pie>
-        <Tooltip 
-             contentStyle={{ 
-                backgroundColor: "hsl(var(--card))", 
-                borderColor: "hsl(var(--border))",
-                borderRadius: "var(--radius)",
-                color: "hsl(var(--card-foreground))"
-            }}
-            itemStyle={{ color: "hsl(var(--foreground))" }}
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "var(--popover)",
+            borderColor: "var(--border)",
+            borderRadius: "var(--radius)",
+            color: "var(--popover-foreground)",
+            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)"
+          }}
+          itemStyle={{ color: "var(--foreground)" }}
         />
-        <Legend 
-            verticalAlign="bottom" 
-            height={36}
-            iconType="circle"
-            formatter={(value) => <span className="text-xs text-muted-foreground ml-1">{value}</span>}
+        <Legend
+          verticalAlign="bottom"
+          height={36}
+          iconType="circle"
+          formatter={(value) => <span className="text-sm text-muted-foreground ml-1">{value}</span>}
         />
       </PieChart>
     </ResponsiveContainer>
