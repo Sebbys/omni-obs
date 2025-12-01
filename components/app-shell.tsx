@@ -5,7 +5,8 @@ import type React from "react"
 import { useState } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 interface AppShellProps {
     children: React.ReactNode
@@ -24,6 +25,10 @@ export function AppShell({ children }: AppShellProps) {
             {/* Mobile Sidebar */}
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                 <SheetContent side="left" className="p-0 w-64">
+                    <VisuallyHidden>
+                        <SheetTitle>Navigation Menu</SheetTitle>
+                        <SheetDescription>Main navigation menu for mobile</SheetDescription>
+                    </VisuallyHidden>
                     <Sidebar onNavigate={() => setSidebarOpen(false)} />
                 </SheetContent>
             </Sheet>

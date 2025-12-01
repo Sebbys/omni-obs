@@ -15,10 +15,6 @@ import {
     DragOverEvent,
     DropAnimation,
     MeasuringStrategy,
-    pointerWithin,
-    rectIntersection,
-    getFirstCollision,
-    CollisionDetection,
 } from "@dnd-kit/core"
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -28,7 +24,7 @@ import { KanbanCard } from "./kanban-card"
 import { AddTodoForm } from "./add-todo-form"
 import { TodoSkeleton } from "./todo-skeleton"
 import { toast } from "sonner"
-import { useCallback, useRef } from "react"
+import { useRef } from "react"
 
 interface Todo {
     id: string
@@ -100,55 +96,6 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         return cols
     }, [todos])
 
-    const collisionDetectionStrategy: CollisionDetection = useCallback(
-        (args) => {
-            if (activeId && activeId in columns) {
-                return closestCorners(args)
-            }
-
-            // First, let's see if there are any collisions with the pointer
-            const pointerIntersections = pointerWithin(args)
-            const intersections =
-                pointerIntersections.length > 0
-                    ? pointerIntersections
-                    : rectIntersection(args)
-
-            let overId = getFirstCollision(intersections, "id")
-
-            if (overId != null) {
-                if (overId in columns) {
-                    const containerItems = columns[overId]
-
-                    // If a container is matched and it contains items (columns 'todo', 'in_progress', etc)
-                    if (containerItems.length > 0) {
-                        // Return the closest droppable within that container
-                        overId = closestCorners({
-                            ...args,
-                            droppableContainers: args.droppableContainers.filter(
-                                (container) =>
-                                    container.id !== overId &&
-                                    columns[overId as string]?.some((t) => t.id === container.id)
-                            ),
-                        })[0]?.id
-                    }
-                }
-
-                lastOverId.current = overId as string
-                return [{ id: overId }]
-            }
-
-            // When a draggable item moves to a new container, the layout may shift
-            // and the `overId` may become null. We manually set the cached `lastOverId`
-            // to the id of the draggable item that was last over the dropped item.
-            if (activeId && lastOverId.current) {
-                // Fallback to closest corner if we lost intersection but still dragging
-                return closestCorners(args)
-            }
-
-            return lastOverId.current ? [{ id: lastOverId.current }] : []
-        },
-        [activeId, columns]
-    )
 
     const { mutate: moveTodo } = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -265,7 +212,6 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         const overId = over.id as string
 
         // Retrieve original status from the drag start snapshot
-        // active.data.current contains the data passed to useSortable at the START of the drag
         const originalTodo = active.data.current as Todo | undefined
         const originalStatus = originalTodo?.status
 
