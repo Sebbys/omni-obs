@@ -24,7 +24,6 @@ import { KanbanCard } from "./kanban-card"
 import { AddTodoForm } from "./add-todo-form"
 import { TodoSkeleton } from "./todo-skeleton"
 import { toast } from "sonner"
-import { useRef } from "react"
 
 interface Todo {
     id: string
@@ -33,6 +32,7 @@ interface Todo {
     status: "todo" | "in_progress" | "review" | "done"
     category: "bug" | "feature" | "enhancement" | "documentation" | "design" | "other"
     priority: "low" | "medium" | "high"
+    order: number
     projectId: string
     createdAt: string
 }
@@ -61,7 +61,7 @@ const dropAnimation: DropAnimation = {
 export function KanbanBoard({ projectId }: KanbanBoardProps) {
     const queryClient = useQueryClient()
     const [activeId, setActiveId] = useState<string | null>(null)
-    const lastOverId = useRef<string | null>(null)
+    const [activeState, setActiveState] = useState<{ status: Todo['status'], order: number } | null>(null)
 
     const { data: todos = [], isLoading, error } = useQuery<Todo[]>({
         queryKey: ["project-todos", projectId],
@@ -98,16 +98,29 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
 
 
     const { mutate: moveTodo } = useMutation({
-        mutationFn: async ({ id, status }: { id: string; status: string }) => {
-            return await updateTodo(id, { status: status as "todo" | "in_progress" | "review" | "done" })
+        mutationKey: ["move-todo", projectId],
+        mutationFn: async ({ id, status, order }: { id: string; status: string; order?: number }) => {
+            return await updateTodo(id, {
+                status: status as "todo" | "in_progress" | "review" | "done",
+                order
+            })
         },
-        onMutate: async ({ id, status }) => {
+        onMutate: async ({ id, status, order }) => {
+            console.log("Starting mutation", { id, status, order })
             await queryClient.cancelQueries({ queryKey: ["project-todos", projectId] })
             const previousTodos = queryClient.getQueryData<Todo[]>(["project-todos", projectId])
 
-            // Optimistically update query cache as well
+            // Optimistically update query cache
             queryClient.setQueryData<Todo[]>(["project-todos", projectId], (old) => {
-                return old?.map((t) => (t.id === id ? { ...t, status: status as "todo" | "in_progress" | "review" | "done" } : t))
+                if (!old) return []
+                const newTodos = old.map((t) => (t.id === id ? {
+                    ...t,
+                    status: status as "todo" | "in_progress" | "review" | "done",
+                    order: order ?? t.order
+                } : t))
+                
+                // Sort by order to keep UI consistent with backend expectations
+                return newTodos.sort((a, b) => a.order - b.order)
             })
 
             return { previousTodos }
@@ -119,7 +132,11 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             toast.error(err.message || "Failed to move todo")
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["project-todos", projectId] })
+            // Only invalidate if no other moves are pending to prevent overwriting optimistic updates
+            const pendingMutations = queryClient.isMutating({ mutationKey: ["move-todo", projectId] })
+            if (pendingMutations === 0) {
+                queryClient.invalidateQueries({ queryKey: ["project-todos", projectId] })
+            }
         },
     })
 
@@ -150,7 +167,12 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
     })
 
     function handleDragStart(event: DragStartEvent) {
-        setActiveId(event.active.id as string)
+        const id = event.active.id as string
+        setActiveId(id)
+        const todo = todos.find(t => t.id === id)
+        if (todo) {
+            setActiveState({ status: todo.status, order: todo.order })
+        }
     }
 
     function handleDragOver(event: DragOverEvent) {
@@ -178,7 +200,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
                 if (items[activeIndex].status !== items[overIndex].status) {
                     const newItems = [...items]
                     newItems[activeIndex] = { ...newItems[activeIndex], status: items[overIndex].status }
-                    return arrayMove(newItems, activeIndex, overIndex - 1 >= 0 ? overIndex - 1 : 0)
+                    return arrayMove(newItems, activeIndex, overIndex)
                 }
 
                 return arrayMove(items, activeIndex, overIndex)
@@ -211,41 +233,53 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
         const activeId = active.id as string
         const overId = over.id as string
 
-        // Retrieve original status from the drag start snapshot
-        const originalTodo = active.data.current as Todo | undefined
-        const originalStatus = originalTodo?.status
+        const currentTodos = queryClient.getQueryData<Todo[]>(["project-todos", projectId]) || []
+        const activeItem = currentTodos.find(t => t.id === activeId)
 
-        // Find current status from the cache (which was updated by DragOver)
-        const currentTodos = queryClient.getQueryData<Todo[]>(["project-todos", projectId])
-        const currentTodo = currentTodos?.find((t) => t.id === activeId)
-
-        if (!currentTodo) {
+        if (!activeItem) {
             setActiveId(null)
             return
         }
 
-        // If dropped over a column container
-        if (COLUMNS.some((col) => col.id === overId)) {
-            // If the status changed compared to ORIGINAL status, persist it
-            if (originalStatus !== overId) {
-                moveTodo({ id: activeId, status: overId })
-            }
+        // Determine target status (overId can be column ID or task ID)
+        let newStatus = activeItem.status
+        if (COLUMNS.some(c => c.id === overId)) {
+            newStatus = overId as Todo["status"]
         } else {
-            // If dropped over another item
-            // We need to check if the status changed.
-            // Since we don't persist order, we only care if status changed.
-            // The 'over' item might be in a different column.
+            const overItem = currentTodos.find(t => t.id === overId)
+            if (overItem) newStatus = overItem.status
+        }
 
-            // However, handleDragOver has already updated the status in the cache.
-            // So currentTodo.status is already the new status.
-            // We should compare originalStatus with currentTodo.status
+        // Get items in the target column (current state from cache)
+        const columnTodos = currentTodos.filter(t => t.status === newStatus)
+        const activeIndex = columnTodos.findIndex(t => t.id === activeId)
 
-            if (originalStatus && currentTodo.status !== originalStatus) {
-                moveTodo({ id: activeId, status: currentTodo.status })
-            }
+        // Calculate New Order
+        const prevItem = columnTodos[activeIndex - 1]
+        const nextItem = columnTodos[activeIndex + 1]
+        let newOrder = activeItem.order
+
+        if (!prevItem && !nextItem) {
+            newOrder = 1000
+        } else if (!prevItem) {
+            newOrder = nextItem.order / 2
+        } else if (!nextItem) {
+            newOrder = prevItem.order + 1000
+        } else {
+            newOrder = (prevItem.order + nextItem.order) / 2
+        }
+
+        // Trigger mutation if Status OR Order changed
+        const hasStatusChanged = activeState ? activeState.status !== newStatus : activeItem.status !== newStatus
+        const hasOrderChanged = Math.abs(newOrder - (activeState?.order ?? activeItem.order)) > 0.0001
+
+        if (hasStatusChanged || hasOrderChanged) {
+            // console.log("Dropping, triggering moveTodo", { activeId, status: newStatus, newOrder })
+            moveTodo({ id: activeId, status: newStatus, order: newOrder })
         }
 
         setActiveId(null)
+        setActiveState(null)
     }
 
     if (isLoading) {

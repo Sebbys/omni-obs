@@ -2,7 +2,7 @@
 
 import { db } from "@/db"
 import { projectTodos, projectMembers } from "@/db/schema"
-import { eq, desc, and } from "drizzle-orm"
+import { eq, desc, and, asc, max } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
@@ -39,7 +39,7 @@ export async function getProjectTodos(projectId: string) {
 
         const todos = await db.query.projectTodos.findMany({
             where: eq(projectTodos.projectId, projectId),
-            orderBy: [desc(projectTodos.createdAt)],
+            orderBy: [asc(projectTodos.order), desc(projectTodos.createdAt)],
         })
         return todos.map(todo => ({
             ...todo,
@@ -60,12 +60,20 @@ export async function createTodo(
     try {
         await checkProjectMembership(projectId)
 
+        // Get max order
+        const [result] = await db.select({ maxOrder: max(projectTodos.order) })
+            .from(projectTodos)
+            .where(eq(projectTodos.projectId, projectId))
+
+        const newOrder = (result?.maxOrder ?? 0) + 1000
+
         const [newTodo] = await db.insert(projectTodos).values({
             projectId,
             content,
             category,
             priority,
             status: "todo",
+            order: newOrder,
         }).returning()
 
         revalidatePath(`/projects/${projectId}`)
@@ -86,6 +94,7 @@ export async function updateTodo(
         status?: "todo" | "in_progress" | "review" | "done"
         category?: "bug" | "feature" | "enhancement" | "documentation" | "design" | "other"
         priority?: "low" | "medium" | "high"
+        order?: number
     }
 ) {
     try {
@@ -112,7 +121,7 @@ export async function updateTodo(
             .where(eq(projectTodos.id, id))
             .returning()
 
-        revalidatePath("/projects")
+        revalidatePath(`/projects/${todo.projectId}`)
         return {
             ...updatedTodo,
             createdAt: updatedTodo.createdAt.toISOString(),
@@ -138,7 +147,7 @@ export async function deleteTodo(id: string) {
         await checkProjectMembership(todo.projectId)
 
         await db.delete(projectTodos).where(eq(projectTodos.id, id))
-        revalidatePath("/projects")
+        revalidatePath(`/projects/${todo.projectId}`)
     } catch (error) {
         console.error("Failed to delete todo:", error)
         throw error

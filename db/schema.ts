@@ -1,4 +1,4 @@
-﻿import { pgTable, text, timestamp, uuid, pgEnum, integer, primaryKey, boolean, index } from 'drizzle-orm/pg-core';
+﻿import { pgTable, text, timestamp, uuid, pgEnum, integer, primaryKey, boolean, index, doublePrecision } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -106,6 +106,7 @@ export const projectTodos = pgTable('project_todos', {
   status: statusEnum('status').default('todo').notNull(),
   category: todoCategoryEnum('category').default('other').notNull(),
   priority: priorityEnum('priority').default('medium').notNull(),
+  order: doublePrecision('order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => ([
   index('project_todos_project_id_idx').on(t.projectId),
@@ -113,6 +114,7 @@ export const projectTodos = pgTable('project_todos', {
   index('project_todos_category_idx').on(t.category),
   index('project_todos_completed_idx').on(t.completed),
   index('project_todos_priority_idx').on(t.priority),
+  index('project_todos_order_idx').on(t.order),
 ]));
 
 // Project Changelogs Table
