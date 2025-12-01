@@ -15,6 +15,7 @@ import {
     Calendar,
     Bell,
     Search,
+    Bot,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
@@ -67,6 +68,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
     const managementItems = [
         { href: "/reports", icon: BarChart3, label: "Reports" },
+        { href: "/agent-workflow", icon: Bot, label: "Agent Swarm" },
         { href: "/notifications", icon: Bell, label: "Notifications", badge: "3" },
     ]
 
